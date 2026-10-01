@@ -30,8 +30,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="django-insecure-secret-key-ansari-store-production-key-9695")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=True)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["https://*.onrender.com", "https://*.vercel.app", "http://127.0.0.1:8000", "http://localhost:5173"])
+ALLOWED_HOSTS = ['*']
+CSRF_TRUSTED_ORIGINS = [
+    'https://ansari-store.onrender.com',
+    'https://ansari-store-indol.vercel.app',
+    'https://*.onrender.com',
+    'https://*.vercel.app',
+    'http://127.0.0.1:8000',
+    'http://localhost:5173',
+]
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 
 
