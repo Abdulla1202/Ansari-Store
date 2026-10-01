@@ -17,7 +17,7 @@ function Products() {
 
     const getCachedData = (key, fallback = []) => {
         try {
-            const item = sessionStorage.getItem(key);
+            const item = localStorage.getItem(key);
             return item ? JSON.parse(item) : fallback;
         } catch (e) {
             return fallback;
@@ -32,7 +32,7 @@ function Products() {
 
     let [isAddingToCart, setIsAddingToCart] = useState("Add To Cart");
     const [loadingStates, setLoadingStates] = useState({});
-    let [loading, setLoading] = useState(() => !sessionStorage.getItem('cached_products'));
+    let [loading, setLoading] = useState(() => !localStorage.getItem('cached_products'));
 
     const axios = apiInstance;
     const addon = Addon();
@@ -110,7 +110,7 @@ function Products() {
             const response = await axios.get(endpoint);
             setDataFunction(response.data);
             if (cacheKey) {
-                sessionStorage.setItem(cacheKey, JSON.stringify(response.data));
+                localStorage.setItem(cacheKey, JSON.stringify(response.data));
             }
         } catch (error) {
             console.log(error);

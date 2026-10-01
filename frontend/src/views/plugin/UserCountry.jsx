@@ -3,29 +3,46 @@ import React, { useEffect, useState } from "react";
 // This functional component, GetCurrentAddress, is responsible for retrieving and displaying the user's current address based on their geolocation coordinates.
 
 function GetCurrentAddress() {
-    // Initialize a state variable 'add' to store the user's current address.
-    const [add, setAdd] = useState('');
+    const [add, setAdd] = useState(() => {
+        try {
+            const cached = localStorage.getItem("cached_user_address");
+            return cached ? JSON.parse(cached) : { country: "India" };
+        } catch (e) {
+            return { country: "India" };
+        }
+    });
 
-    // The 'useEffect' hook is used to execute side effects in function components. In this case, it's used to fetch the user's address based on geolocation when the component mounts (empty dependency array).
     useEffect(() => {
-        // The 'navigator.geolocation.getCurrentPosition' function is used to retrieve the user's current geolocation coordinates.
-        navigator.geolocation.getCurrentPosition(pos => {
-            // Extract the latitude and longitude from the position coordinates.
-            const { latitude, longitude } = pos.coords;
+        if (localStorage.getItem("cached_user_address")) {
+            return;
+        }
 
-            // Create a URL to query the OpenStreetMap Nominatim API for reverse geocoding based on the obtained coordinates.
-            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    const { latitude, longitude } = pos.coords;
+                    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
 
-            // Perform an HTTP fetch request to the API URL and handle the response data.
-            fetch(url)
-                .then(res => res.json()) // Convert the response to JSON format.
-                .then(data => setAdd(data.address)) // Set the 'add' state with the user's address information from the API response.
-        });
-    }, []); // The empty dependency array ensures that this effect runs only once when the component mounts.
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 2500);
 
-    // The 'add' state variable now contains the user's current address information.
+                    fetch(url, { signal: controller.signal })
+                        .then(res => res.json())
+                        .then(data => {
+                            clearTimeout(timeoutId);
+                            if (data?.address) {
+                                setAdd(data.address);
+                                localStorage.setItem("cached_user_address", JSON.stringify(data.address));
+                            }
+                        })
+                        .catch(() => {});
+                },
+                () => {},
+                { timeout: 3000, maximumAge: 86400000 }
+            );
+        }
+    }, []);
 
-    // Return the user's current address, which will be rendered by the component that uses this function.
     return add;
 }
 

@@ -291,20 +291,21 @@ class Product(models.Model):
         new_price = ((self.old_price - self.price) / self.old_price) * 100
         return round(new_price, 0)
     
-    # Calculates the average rating of the product
+    # Calculates the average rating of the product (reads from saved field, fallback to aggregate)
     def product_rating(self):
-        product_rating = Review.objects.filter(product=self).aggregate(avg_rating=models.Avg('rating'))
-        return product_rating['avg_rating']
+        if self.rating is not None and self.rating > 0:
+            return self.rating
+        return 0
     
     # Returns the count of ratings for the product
     def rating_count(self):
-        rating_count = Review.objects.filter(product=self).count()
-        return rating_count
+        if self.rating is not None and self.rating > 0:
+            return Review.objects.filter(product=self).count()
+        return 0
     
-    # Returns the count of orders for the product with "paid" payment status
+    # Returns the count of orders for the product (reads from saved field)
     def order_count(self):
-        order_count = CartOrderItem.objects.filter(product=self, order__payment_status="paid").count()
-        return order_count
+        return self.orders or 0
 
     # Returns the gallery images linked to this product
     def gallery(self):
