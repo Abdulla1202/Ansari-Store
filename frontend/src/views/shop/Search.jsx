@@ -1,9 +1,8 @@
-import { React, useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { FaCheckCircle, FaShoppingCart, FaSpinner } from 'react-icons/fa';
 
 import apiInstance from '../../utils/axios';
-import Addon from '../plugin/Addon';
 import GetCurrentAddress from '../plugin/UserCountry';
 import UserData from '../plugin/UserData';
 import CartID from '../plugin/cartID';
@@ -11,97 +10,100 @@ import { addToCart } from '../plugin/addToCart';
 import { addToWishlist } from '../plugin/addToWishlist';
 import { CartContext } from '../plugin/Context';
 
-
 function Search() {
-
-    const [products, setProducts] = useState([])
-
-    let [isAddingToCart, setIsAddingToCart] = useState("Add To Cart");
+    const [products, setProducts] = useState([]);
     const [loadingStates, setLoadingStates] = useState({});
-    let [loading, setLoading] = useState(true);
-    let [searchResults, setSearchResults] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const axios = apiInstance
-    const [searchParams] = useSearchParams();
-    const query = searchParams.get('query');
+    const axios = apiInstance;
+    const [searchParams, setSearchParams] = useSearchParams();
+    const query = searchParams.get('query') || '';
+    const [searchTerm, setSearchTerm] = useState(query || '');
 
-    const currentAddress = GetCurrentAddress()
-    const userData = UserData()
-    let cart_id = CartID()
-
-    console.log("param", query);
+    const currentAddress = GetCurrentAddress();
+    const userData = UserData();
+    let cart_id = CartID();
 
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedColors, setSelectedColors] = useState({});
     const [selectedSize, setSelectedSize] = useState({});
-    const [colorImage, setColorImage] = useState("")
-    const [colorValue, setColorValue] = useState("No Color")
-    const [sizeValue, setSizeValue] = useState("No Size")
-    const [qtyValue, setQtyValue] = useState(1)
+    const [colorImage, setColorImage] = useState('');
+    const [colorValue, setColorValue] = useState('No Color');
+    const [sizeValue, setSizeValue] = useState('No Size');
+    const [qtyValue, setQtyValue] = useState(1);
     let [cartCount, setCartCount] = useContext(CartContext);
+    const [activeDropdown, setActiveDropdown] = useState(null);
 
-    // Define an async function for fetching data from an API endpoint and updating the state.
-    // This function takes two parameters:
-    // - endpoint: The API endpoint to fetch data from.
-    // - setDataFunction: The state update function to set the retrieved data.
-    async function fetchData(endpoint, setDataFunction) {
-        try {
-            // Send an HTTP GET request to the provided endpoint using Axios.
-            const response = await axios.get(endpoint);
-
-            // If the request is successful, update the state with the retrieved data.
-            setDataFunction(response.data);
-            if (products) {
-                setLoading(false)
-            }
-        } catch (error) {
-            // If an error occurs during the request, log the error to the console.
-            console.log(error);
-        }
-    }
-
-    
-
+    // Keep input in sync with URL query
     useEffect(() => {
-        // Fetch and set the 'products' data by calling fetchData with the 'products/' endpoint.
-        fetchData(`search/?query=${query}`, setProducts);
-
+        setSearchTerm(query || '');
     }, [query]);
 
-    console.log(searchResults);
+    useEffect(() => {
+        let isMounted = true;
+        setLoading(true);
 
+        const fetchResults = async () => {
+            try {
+                // If query is valid, search; otherwise fetch all products
+                const endpoint = (query && query.trim() !== '' && query !== 'null')
+                    ? `search/?query=${encodeURIComponent(query.trim())}`
+                    : 'products/';
 
-    const handleColorButtonClick = (event, product_id, colorName, colorImage) => {
+                const response = await axios.get(endpoint);
+                if (isMounted) {
+                    setProducts(response.data || []);
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error('Search fetch error:', error);
+                if (isMounted) {
+                    setProducts([]);
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchResults();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [query]);
+
+    const handleSearchSubmit = (e) => {
+        if (e) e.preventDefault();
+        const trimmed = searchTerm.trim();
+        if (trimmed) {
+            setSearchParams({ query: trimmed });
+        } else {
+            setSearchParams({});
+        }
+    };
+
+    const handleColorButtonClick = (event, product_id, colorName, colorImg) => {
         setColorValue(colorName);
-        setColorImage(colorImage);
+        setColorImage(colorImg);
         setSelectedProduct(product_id);
-
-        setSelectedColors((prevSelectedColors) => ({
-            ...prevSelectedColors,
+        setSelectedColors((prev) => ({
+            ...prev,
             [product_id]: colorName,
         }));
-
-
     };
 
     const handleSizeButtonClick = (event, product_id, sizeName) => {
         setSizeValue(sizeName);
         setSelectedProduct(product_id);
-
-        setSelectedSize((prevSelectedSize) => ({
-            ...prevSelectedSize,
+        setSelectedSize((prev) => ({
+            ...prev,
             [product_id]: sizeName,
         }));
-
     };
 
     const handleQtyChange = (event, product_id) => {
         setQtyValue(event.target.value);
         setSelectedProduct(product_id);
     };
-
-
-    const [activeDropdown, setActiveDropdown] = useState(null);
 
     const toggleVariationDropdown = (productId, e) => {
         if (e) {
@@ -116,289 +118,351 @@ function Search() {
     };
 
     const handleAddToCart = async (product_id, price, shipping_amount) => {
-        setLoadingStates((prevStates) => ({
-            ...prevStates,
+        setLoadingStates((prev) => ({
+            ...prev,
             [product_id]: 'Adding...',
         }));
 
-
         try {
-            await addToCart(product_id, userData?.user_id, qtyValue, price, shipping_amount, currentAddress.country, colorValue, sizeValue, cart_id, setIsAddingToCart)
+            await addToCart(
+                product_id,
+                userData?.user_id,
+                qtyValue,
+                price,
+                shipping_amount,
+                currentAddress?.country,
+                colorValue,
+                sizeValue,
+                cart_id
+            );
 
-            // After a successful operation, set the loading state to false
-            setLoadingStates((prevStates) => ({
-                ...prevStates,
+            setLoadingStates((prev) => ({
+                ...prev,
                 [product_id]: 'Added to Cart',
             }));
 
+            setColorValue('No Color');
+            setSizeValue('No Size');
+            setQtyValue(1);
+            closeVariationDropdown();
 
-
-            setColorValue("No Color");
-            setSizeValue("No Size");
-            setQtyValue(0)
-            closeVariationDropdown(product_id);
-
-            const url = userData?.user_id ? `cart-list/${cart_id}/${userData?.user_id}/` : `cart-list/${cart_id}/`;
+            const url = userData?.user_id
+                ? `cart-list/${cart_id}/${userData?.user_id}/`
+                : `cart-list/${cart_id}/`;
             const response = await axios.get(url);
-
-            setCartCount(response.data.length);
-            console.log(response.data.length);
-
-
+            setCartCount(response.data?.length || 0);
         } catch (error) {
-            console.log(error);
-
-            // In case of an error, set the loading state for the specific product back to "Add to Cart"
-            setLoadingStates((prevStates) => ({
-                ...prevStates,
+            console.error('Error adding to cart:', error);
+            setLoadingStates((prev) => ({
+                ...prev,
                 [product_id]: 'Add to Cart',
             }));
         }
-
-
     };
-
 
     const handleAddToWishlist = async (product_id) => {
         try {
-            await addToWishlist(product_id, userData?.user_id)
+            await addToWishlist(product_id, userData?.user_id);
         } catch (error) {
-            console.log(error);
+            console.error('Error adding to wishlist:', error);
         }
     };
 
+    const hasQuery = Boolean(query && query.trim() !== '' && query !== 'null');
 
     return (
-        <>
-            {loading === false &&
-                <div>
-                    <main className="mt-5" style={{marginBottom:'100px'}}>
-                        <div className="container">
-                            <section className="text-center container">
-                                <div className="row mt-4 mb-3">
-                                    <div className="col-lg-6 col-md-8 mx-auto">
-                                        <h1 className="fw-light">Search: "{query}"</h1>
+        <main className="mt-4 mb-5" style={{ minHeight: '70vh' }}>
+            <div className="container">
+                {/* Search Bar Header */}
+                <div className="card shadow-sm border-0 rounded-4 p-3 mb-4 bg-white">
+                    <form onSubmit={handleSearchSubmit} className="d-flex gap-2">
+                        <div className="position-relative flex-grow-1">
+                            <i
+                                className="fas fa-search position-absolute top-50 translate-middle-y text-muted"
+                                style={{ left: '16px' }}
+                            ></i>
+                            <input
+                                type="text"
+                                className="form-control rounded-pill py-2 ps-5 pe-5 border-secondary border-opacity-25"
+                                placeholder="Search by title, brand, category..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                style={{ fontSize: '0.95rem' }}
+                                autoFocus
+                            />
+                            {searchTerm && (
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-link text-muted position-absolute top-50 end-0 translate-middle-y me-2 p-1"
+                                    onClick={() => {
+                                        setSearchTerm('');
+                                        setSearchParams({});
+                                    }}
+                                    title="Clear search"
+                                >
+                                    <i className="fas fa-times-circle"></i>
+                                </button>
+                            )}
+                        </div>
+                        <button type="submit" className="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                            Search
+                        </button>
+                    </form>
+                </div>
+
+                {/* Status Bar */}
+                <div className="d-flex justify-content-between align-items-center mb-3 px-1">
+                    <h5 className="fw-bold mb-0 text-dark" style={{ fontSize: '1.1rem' }}>
+                        {hasQuery ? (
+                            <span>
+                                Results for "<span className="text-primary">{query}</span>"
+                            </span>
+                        ) : (
+                            <span>Explore All Products</span>
+                        )}
+                    </h5>
+                    {!loading && (
+                        <span className="badge bg-light text-secondary border px-3 py-2 rounded-pill small">
+                            {products.length} {products.length === 1 ? 'item' : 'items'}
+                        </span>
+                    )}
+                </div>
+
+                {/* Loading State */}
+                {loading && (
+                    <div className="text-center py-5">
+                        <div className="spinner-border text-primary" role="status" style={{ width: '3rem', height: '3rem' }}>
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                        <p className="text-secondary mt-3 small">Fetching products...</p>
+                    </div>
+                )}
+
+                {/* Empty Results State */}
+                {!loading && products.length === 0 && (
+                    <div className="text-center py-5 px-3 bg-white rounded-4 shadow-sm border border-light my-3">
+                        <div
+                            className="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-3"
+                            style={{ width: '64px', height: '64px' }}
+                        >
+                            <i className="fas fa-search text-muted" style={{ fontSize: '24px' }}></i>
+                        </div>
+                        <h5 className="fw-bold text-dark">No products found for "{query}"</h5>
+                        <p className="text-muted small mb-4">
+                            Try checking your spelling or searching with different keywords.
+                        </p>
+                        <button
+                            onClick={() => {
+                                setSearchTerm('');
+                                setSearchParams({});
+                            }}
+                            className="btn btn-primary rounded-pill px-4"
+                        >
+                            <i className="fas fa-grid-2 me-1"></i> Browse All Products
+                        </button>
+                    </div>
+                )}
+
+                {/* Products Grid */}
+                {!loading && products.length > 0 && (
+                    <div className="row g-2 g-md-3">
+                        {products.map((product) => (
+                            <div
+                                className="col-6 col-md-4 col-lg-3 mb-3"
+                                key={product.id}
+                                style={{ zIndex: activeDropdown === product.id ? 1050 : 1, position: 'relative' }}
+                            >
+                                <div className="card shadow-sm h-100 border-0 rounded-3 overflow-visible">
+                                    <div className="bg-image hover-zoom ripple position-relative" data-mdb-ripple-color="light">
+                                        <Link to={`/detail/${product.slug}`}>
+                                            <img
+                                                src={
+                                                    selectedProduct === product.id && colorImage
+                                                        ? colorImage
+                                                        : product.image
+                                                }
+                                                className="w-100 rounded-top"
+                                                alt={product.title}
+                                                style={{ height: '175px', objectFit: 'cover' }}
+                                                loading="lazy"
+                                            />
+                                        </Link>
                                     </div>
-                                </div>
-                            </section>
-                            <section className="text-center">
-                                <div className="row">
-                                    {products.map((product, index) => (
-                                         <div
-                                             className="col-lg-4 col-md-12 mb-4"
-                                             key={product.id}
-                                             style={{ zIndex: activeDropdown === product.id ? 1050 : 1, position: "relative" }}
-                                         >
-                                             <div className="card shadow-sm h-100" style={{ overflow: "visible" }}>
-                                                 <div
-                                                     className="bg-image hover-zoom ripple"
-                                                     data-mdb-ripple-color="light"
-                                                 >
-                                                     <Link to={`/detail/${product.slug}`}>
-                                                         <img
-                                                             src={(selectedProduct === product.id && colorImage) ? colorImage : product.image}
-                                                             className="w-100"
-                                                             style={{ height: "260px", objectFit: "cover" }}
-                                                         />
-                                                     </Link>
-                                                 </div>
-                                                 <div className="card-body" style={{ overflow: "visible" }}>
 
-                                                     <h6 className="">By: <Link to={`/vendor/${product?.vendor?.slug}`}>{product.vendor.name}</Link></h6>
-                                                     <Link to={`/detail/${product.slug}`} className="text-reset"><h5 className="card-title mb-3 ">{product.title.slice(0, 30)}...</h5></Link>
-                                                     <Link to="/" className="text-reset"><p>{product?.brand.title}</p></Link>
-                                                     <h6 className="mb-1">${product.price}</h6>
-
-                                                     {((product.color && product.color.length > 0) || (product.size && product.size.length > 0)) ? (
-                                                         <div className="btn-group position-relative variation-dropdown-container">
-                                                             <button
-                                                                className={`btn btn-primary dropdown-toggle ${activeDropdown === product.id ? 'show' : ''}`}
-                                                                type="button"
-                                                                onClick={(e) => toggleVariationDropdown(product.id, e)}
-                                                                aria-expanded={activeDropdown === product.id ? "true" : "false"}
-                                                             >
-                                                                Variation
-                                                             </button>
-                                                             {activeDropdown === product.id && (
-                                                                 <>
-                                                                     <div
-                                                                         style={{
-                                                                             position: "fixed",
-                                                                             top: 0,
-                                                                             left: 0,
-                                                                             width: "100vw",
-                                                                             height: "100vh",
-                                                                             zIndex: 1040,
-                                                                             background: "transparent"
-                                                                         }}
-                                                                         onClick={(e) => {
-                                                                             e.preventDefault();
-                                                                             e.stopPropagation();
-                                                                             setActiveDropdown(null);
-                                                                        }}
-                                                                     />
-                                                                     <ul
-                                                                         className="dropdown-menu show shadow-lg border-0 rounded-3 p-3"
-                                                                         style={{
-                                                                             display: "block",
-                                                                             position: "absolute",
-                                                                             top: "100%",
-                                                                             left: 0,
-                                                                             zIndex: 1055,
-                                                                             maxWidth: "340px",
-                                                                             minWidth: "280px",
-                                                                             backgroundColor: "#ffffff",
-                                                                             boxShadow: "0 10px 30px rgba(0,0,0,0.18)"
-                                                                         }}
-                                                                         onClick={(e) => e.stopPropagation()}
-                                                                     >
-                                                                {/* Quantity */}
-                                                                <div className="d-flex flex-column mb-2 mt-2 p-1">
-                                                                    <div className="p-1 mt-0 pt-0 d-flex flex-wrap">
-                                                                        <>
-                                                                            <li>
-                                                                                <input
-                                                                                    type="number"
-                                                                                    className='form-control'
-                                                                                    placeholder='Quantity'
-                                                                                    onChange={(e) => handleQtyChange(e, product.id)}
-                                                                                    min={1}
-                                                                                    defaultValue={1}
-                                                                                />
-                                                                            </li>
-                                                                        </>
-                                                                    </div>
-                                                                </div>
-
-                                                                {/* Size */}
-                                                                {product?.size && product?.size.length > 0 && (
-                                                                    <div className="d-flex flex-column">
-                                                                        <li className="p-1"><b>Size</b>: {selectedSize[product.id] || 'Select a size'}</li>
-                                                                        <div className="p-1 mt-0 pt-0 d-flex flex-wrap">
-                                                                            {product?.size?.map((size, index) => (
-                                                                                <>
-                                                                                    <li key={index}>
-                                                                                        <button
-                                                                                            className="btn btn-secondary btn-sm me-2 mb-1"
-                                                                                            onClick={(e) => handleSizeButtonClick(e, product.id, size.name)}
-                                                                                        >
-                                                                                            {size.name}
-                                                                                        </button>
-                                                                                    </li>
-                                                                                </>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
-
-                                                                {/* Color */}
-                                                                {product.color && product.color.length > 0 && (
-                                                                    <div className="d-flex flex-column mt-3">
-                                                                        <li className="p-1 color_name_div"><b>Color</b>: {selectedColors[product.id] || 'Select a color'}</li>
-                                                                        <div className="p-1 mt-0 pt-0 d-flex flex-wrap">
-                                                                            {product?.color?.map((color, index) => (
-                                                                                <>
-                                                                                    <input type="hidden" className={`color_name${color.id}`} name="" id="" />
-                                                                                    <li key={index}>
-                                                                                        <button
-                                                                                            key={color.id}
-                                                                                            className="color-button btn p-3 me-2"
-                                                                                            style={{ backgroundColor: color.color_code }}
-                                                                                            onClick={(e) => handleColorButtonClick(e, product.id, color.name, color.image)}
-                                                                                        >
-                                                                                        </button>
-                                                                                    </li>
-                                                                                </>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
-                                                                {/* Add To Cart */}
-                                                                <div className="d-flex mt-3 p-1 w-100">
-                                                                    <button
-                                                                        onClick={() => handleAddToCart(product.id, product.price, product.shipping_amount)}
-                                                                        disabled={loadingStates[product.id] === 'Adding...'}
-                                                                        type="button"
-                                                                        className="btn btn-primary me-1 mb-1"
-                                                                    >
-                                                                        {loadingStates[product.id] === 'Added to Cart' ? (
-                                                                            <>
-                                                                                Added to Cart <FaCheckCircle />
-                                                                            </>
-                                                                        ) : loadingStates[product.id] === 'Adding...' ? (
-                                                                            <>
-                                                                                Adding to Cart <FaSpinner className='fas fa-spin' />
-                                                                            </>
-                                                                        ) : (
-                                                                            <>
-                                                                                {loadingStates[product.id] || 'Add to Cart'} <FaShoppingCart />
-                                                                            </>
-                                                                        )}
-                                                                    </button>
-                                                                </div>
-                                                            </ul>
-                                                            </>
-                                                            )}
-                                                        </div>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => handleAddToCart(product.id, product.price, product.shipping_amount)}
-                                                            disabled={loadingStates[product.id] === 'Adding...'}
-                                                            type="button"
-                                                            className="btn btn-primary me-1 mb-1"
-                                                        >
-                                                            {loadingStates[product.id] === 'Added to Cart' ? (
-                                                                <>
-                                                                    Added to Cart <FaCheckCircle />
-                                                                </>
-                                                            ) : loadingStates[product.id] === 'Adding...' ? (
-                                                                <>
-                                                                    Adding to Cart <FaSpinner className='fas fa-spin' />
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    {loadingStates[product.id] || 'Add to Cart'} <FaShoppingCart />
-                                                                </>
-                                                            )}
-                                                        </button>
-
-                                                    )}
-
-                                                    {/* Wishlist Button */}
-                                                    <button
-                                                        onClick={() => handleAddToWishlist(product.id)}
-                                                        type="button"
-                                                        className="btn btn-danger px-3 ms-2 "
-                                                    >
-                                                        <i className="fas fa-heart" />
-                                                    </button>
-
-                                                </div>
+                                    <div className="card-body p-2 p-md-3 d-flex flex-column justify-content-between">
+                                        <div>
+                                            <div className="text-muted small text-truncate mb-1" style={{ fontSize: '0.75rem' }}>
+                                                {product?.brand?.title || product?.vendor?.name}
+                                            </div>
+                                            <Link to={`/detail/${product.slug}`} className="text-dark text-decoration-none">
+                                                <h6
+                                                    className="card-title fw-semibold mb-1 text-truncate"
+                                                    title={product.title}
+                                                    style={{ fontSize: '0.85rem', lineHeight: '1.3' }}
+                                                >
+                                                    {product.title}
+                                                </h6>
+                                            </Link>
+                                            <div className="fw-bold text-dark mb-2" style={{ fontSize: '0.95rem' }}>
+                                                ₹{product.price}
                                             </div>
                                         </div>
-                                    ))}
 
-                                    {products.length < 1 && 
-                                        <h4>No Results For "{query}"</h4>
-                                    }
+                                        <div className="d-flex align-items-center gap-1 mt-auto">
+                                            {/* Variation or Direct Add to Cart */}
+                                            {((product.color && product.color.length > 0) ||
+                                                (product.size && product.size.length > 0)) ? (
+                                                <div className="position-relative flex-grow-1">
+                                                    <button
+                                                        className="btn btn-primary btn-sm rounded-pill w-100 py-1"
+                                                        type="button"
+                                                        onClick={(e) => toggleVariationDropdown(product.id, e)}
+                                                        style={{ fontSize: '0.75rem' }}
+                                                    >
+                                                        Options
+                                                    </button>
 
+                                                    {activeDropdown === product.id && (
+                                                        <>
+                                                            <div
+                                                                style={{
+                                                                    position: 'fixed',
+                                                                    top: 0,
+                                                                    left: 0,
+                                                                    width: '100vw',
+                                                                    height: '100vh',
+                                                                    zIndex: 1040,
+                                                                    background: 'transparent',
+                                                                }}
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    setActiveDropdown(null);
+                                                                }}
+                                                            />
+                                                            <div
+                                                                className="dropdown-menu show shadow-lg border-0 rounded-3 p-3"
+                                                                style={{
+                                                                    display: 'block',
+                                                                    position: 'absolute',
+                                                                    bottom: '100%',
+                                                                    left: 0,
+                                                                    zIndex: 1055,
+                                                                    maxWidth: '300px',
+                                                                    minWidth: '240px',
+                                                                    backgroundColor: '#ffffff',
+                                                                    marginBottom: '6px',
+                                                                }}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                {/* Size */}
+                                                                {product?.size && product?.size.length > 0 && (
+                                                                    <div className="mb-2">
+                                                                        <div className="small fw-bold mb-1">
+                                                                            Size: {selectedSize[product.id] || 'Select'}
+                                                                        </div>
+                                                                        <div className="d-flex flex-wrap gap-1">
+                                                                            {product.size.map((sz, i) => (
+                                                                                <button
+                                                                                    key={i}
+                                                                                    type="button"
+                                                                                    className={`btn btn-xs btn-sm py-0 px-2 rounded ${
+                                                                                        selectedSize[product.id] === sz.name
+                                                                                            ? 'btn-dark'
+                                                                                            : 'btn-outline-secondary'
+                                                                                    }`}
+                                                                                    onClick={(e) =>
+                                                                                        handleSizeButtonClick(e, product.id, sz.name)
+                                                                                    }
+                                                                                >
+                                                                                    {sz.name}
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Color */}
+                                                                {product?.color && product?.color.length > 0 && (
+                                                                    <div className="mb-2">
+                                                                        <div className="small fw-bold mb-1">
+                                                                            Color: {selectedColors[product.id] || 'Select'}
+                                                                        </div>
+                                                                        <div className="d-flex flex-wrap gap-1">
+                                                                            {product.color.map((cl, i) => (
+                                                                                <button
+                                                                                    key={i}
+                                                                                    type="button"
+                                                                                    className="rounded-circle border"
+                                                                                    style={{
+                                                                                        width: '22px',
+                                                                                        height: '22px',
+                                                                                        backgroundColor: cl.color_code || '#000',
+                                                                                    }}
+                                                                                    onClick={(e) =>
+                                                                                        handleColorButtonClick(e, product.id, cl.name, cl.image)
+                                                                                    }
+                                                                                />
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Add button inside dropdown */}
+                                                                <button
+                                                                    onClick={() =>
+                                                                        handleAddToCart(product.id, product.price, product.shipping_amount)
+                                                                    }
+                                                                    disabled={loadingStates[product.id] === 'Adding...'}
+                                                                    type="button"
+                                                                    className="btn btn-primary btn-sm rounded-pill w-100 mt-2 fw-semibold"
+                                                                >
+                                                                    Add to Cart
+                                                                </button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() =>
+                                                        handleAddToCart(product.id, product.price, product.shipping_amount)
+                                                    }
+                                                    disabled={loadingStates[product.id] === 'Adding...'}
+                                                    type="button"
+                                                    className="btn btn-primary btn-sm rounded-pill flex-grow-1 py-1"
+                                                    style={{ fontSize: '0.75rem' }}
+                                                >
+                                                    {loadingStates[product.id] === 'Added to Cart' ? (
+                                                        <span><FaCheckCircle className="me-1" /> Added</span>
+                                                    ) : loadingStates[product.id] === 'Adding...' ? (
+                                                        <span><FaSpinner className="fas fa-spin me-1" /> Adding</span>
+                                                    ) : (
+                                                        <span><FaShoppingCart className="me-1" /> Add</span>
+                                                    )}
+                                                </button>
+                                            )}
+
+                                            {/* Wishlist Button */}
+                                            <button
+                                                onClick={() => handleAddToWishlist(product.id)}
+                                                type="button"
+                                                className="btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center p-0"
+                                                style={{ width: '28px', height: '28px', flexShrink: 0 }}
+                                                title="Add to Wishlist"
+                                            >
+                                                <i className="fas fa-heart" style={{ fontSize: '11px' }} />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </section>
-                            {/*Section: Wishlist*/}
-                        </div>
-                    </main>
-                </div>
-            }
-
-            {loading === true &&
-                <div className="container text-center">
-                    <img className='' src="https://cdn.dribbble.com/users/2046015/screenshots/5973727/06-loader_telega.gif" alt="" />
-                </div>
-            }
-        </>
-    )
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </main>
+    );
 }
 
-export default Search
+export default Search;

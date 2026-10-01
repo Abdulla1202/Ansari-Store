@@ -8,6 +8,8 @@ const Logout = () => {
     useEffect(() => {
     const handleLogout = async () => {
         await logout();
+        localStorage.removeItem("guest_cart");
+        localStorage.removeItem("randomString");
         setCartCount(0);
     };
 

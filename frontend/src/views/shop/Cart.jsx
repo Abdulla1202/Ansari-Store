@@ -226,6 +226,17 @@ useEffect(() => {
     if (!userData?.user_id) {
         setCart(updatedGuestCart);
         setCartCount(updatedGuestCart.length);
+        const subTotal = updatedGuestCart.reduce(
+            (total, item) => total + Number(item.price || 0) * Number(item.qty || 0),
+            0
+        );
+        setCartTotal({
+            sub_total: subTotal,
+            shipping: 0,
+            tax: 0,
+            service_fee: 0,
+            total: subTotal,
+        });
         return;
     }
 
@@ -255,7 +266,33 @@ useEffect(() => {
         }
     }
   };
-    
+
+  const handleClearCart = async () => {
+    localStorage.removeItem("guest_cart");
+    setCart([]);
+    setCartCount(0);
+    setCartTotal({
+        sub_total: 0,
+        shipping: 0,
+        tax: 0,
+        service_fee: 0,
+        total: 0,
+    });
+
+    if (userData?.user_id) {
+        for (const item of cart) {
+            try {
+                await axios.delete(`cart-delete/${item.cart_id || cart_id}/${item.id}/${userData.user_id}/`);
+            } catch (e) {
+                try {
+                    await axios.delete(`cart-delete/${item.cart_id || cart_id}/${item.id}/`);
+                } catch (err) {}
+            }
+        }
+        await fetchCartData(cart_id, userData.user_id);
+        await fetchCartTotal(cart_id, userData.user_id);
+    }
+  };
 
 
 
@@ -361,6 +398,16 @@ useEffect(() => {
                                     <div className="col-lg-8 mb-4 mb-md-0">
                                         {/* Section: Product list */}
                                         <section className="mb-5">
+                                            <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                                <h4 className="fw-bold mb-0">
+                                                    Shopping Cart {cart.length > 0 && <span className="text-muted small">({cart.length})</span>}
+                                                </h4>
+                                                {cart.length > 0 && (
+                                                    <button onClick={handleClearCart} className="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                                        <i className="fas fa-trash me-1"></i> Clear Cart
+                                                    </button>
+                                                )}
+                                            </div>
 
                                            {cart.map((c, index) => (
     <div
