@@ -20,6 +20,8 @@ function Orders() {
         }
     });
 
+    const [loading, setLoading] = useState(() => !localStorage.getItem(`cached_vendor_orders_${vendorId}`));
+
     if (UserData()?.vendor_id === 0) {
         window.location.href = '/vendor/register/'
       }
@@ -33,11 +35,13 @@ function Orders() {
                 localStorage.setItem(`cached_vendor_orders_${vendorId}`, JSON.stringify(response.data));
             } catch (error) {
                 console.error('Error fetching data:', error);
+            } finally {
+                setLoading(false);
             }
         };
 
         fetchData();
-    }, []);
+    }, [vendorId]);
     return (
         <div className="container-fluid" id="main" >
             <div className="row row-offcanvas row-offcanvas-left h-100">
@@ -58,7 +62,18 @@ function Orders() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {orders?.map((o, index) => (
+                                    {loading && (
+                                        <tr>
+                                            <td colSpan="5" className="text-center py-4">
+                                                <div className="spinner-border text-primary" role="status">
+                                                    <span className="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p className="text-muted mt-2 small">Loading your orders...</p>
+                                            </td>
+                                        </tr>
+                                    )}
+
+                                    {!loading && orders?.map((o, index) => (
                                         <tr key={index}>
                                             <th scope="row">#{o.oid}</th>
                                             <td>{o.full_name}</td>
@@ -83,13 +98,13 @@ function Orders() {
                                         </tr>
                                     ))}
 
-                                    {orders?.length === 0 && (
-    <tr>
-        <td colSpan="5" className="text-center">
-            <h5 className="mt-4 p-3">No orders yet</h5>
-        </td>
-    </tr>
-)}
+                                    {!loading && orders?.length === 0 && (
+                                        <tr>
+                                            <td colSpan="5" className="text-center">
+                                                <h5 className="mt-4 p-3 text-muted">No orders found</h5>
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>

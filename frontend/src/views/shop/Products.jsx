@@ -57,7 +57,7 @@ function Products() {
     const initialPage = parseInt(searchParams.get('page') || sessionStorage.getItem('products_current_page') || '1', 10);
     const [currentPage, setCurrentPage] = useState(initialPage > 0 ? initialPage : 1);
 
-    const handlePageChange = (newPage) => {
+    const handlePageChange = (newPage, scrollMode = "products") => {
         setCurrentPage(newPage);
         setSearchParams((prev) => {
             const p = new URLSearchParams(prev);
@@ -65,7 +65,15 @@ function Products() {
             return p;
         });
         sessionStorage.setItem('products_current_page', newPage);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        if (scrollMode === "products") {
+            const target = document.getElementById("featured-products");
+            if (target) {
+                target.scrollIntoView({ behavior: "smooth", block: "start" });
+                return;
+            }
+        }
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     // Synchronize page if URL search params change (e.g. browser back / forward button)
@@ -689,7 +697,7 @@ function Products() {
         className="btn btn-outline-dark"
         onClick={() => {
             setSelectedCategory(null);
-            handlePageChange(1);
+            handlePageChange(1, "products");
         }}
     >
         All Products
@@ -698,7 +706,15 @@ function Products() {
 
 <div className="d-flex justify-content-center flex-wrap gap-3 mb-4 px-2">
     {category.map((c, index) => (
-        <div key={c.id || index} className="align-items-center d-flex flex-column p-3 rounded-3 shadow-sm bg-white" style={{ minWidth: "110px", maxWidth: "150px", border: "1px solid #e2e8f0" }}>
+        <div
+            key={c.id || index}
+            className="align-items-center d-flex flex-column p-3 rounded-3 shadow-sm bg-white"
+            style={{ minWidth: "110px", maxWidth: "150px", border: "1px solid #e2e8f0", cursor: "pointer", transition: "transform 0.2s" }}
+            onClick={() => {
+                setSelectedCategory(c.id);
+                handlePageChange(1, "products");
+            }}
+        >
             <img src={c.image}
                 alt={c.title}
                 style={{ width: "65px", height: "65px", objectFit: "cover", borderRadius: "50%" }}
@@ -708,10 +724,6 @@ function Products() {
                     type="button"
                     className="btn btn-link text-dark text-decoration-none fw-semibold p-0 text-truncate"
                     style={{ maxWidth: "120px", fontSize: "0.85rem" }}
-                    onClick={() => {
-                        setSelectedCategory(c.id);
-                        handlePageChange(1);
-                    }}
                 >
                     {c.title}
                 </button>
