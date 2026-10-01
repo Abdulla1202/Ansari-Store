@@ -8,9 +8,48 @@ logger = logging.getLogger(__name__)
 
 def _send_email_worker(subject, text_body, html_body, to_list, from_email):
     """
-    Background worker thread function to send an email via Django mail backend.
-    Catches all exceptions so the calling thread/request is never affected.
+    Background worker thread function to send an email.
+    Supports Resend HTTP API (Port 443, Render free tier compatible)
+    with seamless fallback to Django SMTP backend.
     """
+    import os
+    import requests
+
+    # 1. Try Resend HTTP API if configured (Bypasses Render SMTP port blocking)
+    resend_api_key = getattr(settings, "RESEND_API_KEY", None) or os.environ.get("RESEND_API_KEY")
+    if resend_api_key:
+        try:
+            sender = from_email or os.environ.get("RESEND_FROM_EMAIL", "Ansari Store <onboarding@resend.dev>")
+            payload = {
+                "from": sender,
+                "to": to_list,
+                "subject": subject,
+                "text": text_body or "",
+            }
+            if html_body:
+                payload["html"] = html_body
+
+            resp = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {resend_api_key}",
+                    "Content-Type": "application/json"
+                },
+                json=payload,
+                timeout=20
+            )
+            if resp.status_code in [200, 201]:
+                print(f"[RESEND EMAIL SUCCESS] Sent to {to_list} | Subject: '{subject}'")
+                logger.info(f"Resend email sent to {to_list} with subject '{subject}'")
+                return
+            else:
+                print(f"[RESEND EMAIL ERROR] Status {resp.status_code}: {resp.text}")
+                logger.error(f"Resend email error: {resp.status_code} - {resp.text}")
+        except Exception as ex:
+            print(f"[RESEND EXCEPTION] {ex}")
+            logger.exception(f"Resend exception: {ex}")
+
+    # 2. Standard Django SMTP fallback
     try:
         sender = from_email or getattr(settings, "FROM_EMAIL", None) or getattr(settings, "DEFAULT_FROM_EMAIL", None)
         if sender:

@@ -242,6 +242,9 @@ FROM_EMAIL = EMAIL_HOST_USER
 DEFAULT_FROM_EMAIL = FROM_EMAIL
 SERVER_EMAIL = FROM_EMAIL
 
+# Resend API Key for Cloud Platforms (bypasses Render SMTP port blocking)
+RESEND_API_KEY = env("RESEND_API_KEY", default="")
+
 CORS_ALLOW_ALL_ORIGINS = True
 
 
