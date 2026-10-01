@@ -45,9 +45,17 @@ console.log("VENDOR ID:", userData?.vendor_id);
                         <span>Ansari Store</span>
                     </Link>
 
-                    <button className="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                        <span className="navbar-toggler-icon" />
-                    </button>
+                    <div className="d-flex align-items-center gap-2 d-lg-none">
+                        <Link className="btn btn-danger btn-sm rounded-pill px-3 py-1 d-flex align-items-center gap-1 shadow-sm" to="/cart/">
+                            <i className='fas fa-shopping-cart' style={{ fontSize: "13px" }}></i>
+                            <span className="badge bg-white text-danger rounded-pill px-1" style={{ fontSize: "11px" }}>
+                                {cartCount || 0}
+                            </span>
+                        </Link>
+                        <button className="navbar-toggler border-0 p-1" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                            <span className="navbar-toggler-icon" />
+                        </button>
+                    </div>
 
                     <div className="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul className="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center">
@@ -136,7 +144,7 @@ console.log("VENDOR ID:", userData?.vendor_id);
                             )}
                             
                             {/* Cart Button */}
-                            <Link className="btn btn-danger btn-sm rounded-pill px-3 d-flex align-items-center gap-2 shadow-sm" to="/cart/">
+                            <Link className="btn btn-danger btn-sm rounded-pill px-3 d-none d-lg-flex align-items-center gap-2 shadow-sm" to="/cart/">
                                 <i className='fas fa-shopping-cart'></i>
                                 <span className="badge bg-white text-danger rounded-pill" id='cart-total-items'>
                                     {cartCount || 0}

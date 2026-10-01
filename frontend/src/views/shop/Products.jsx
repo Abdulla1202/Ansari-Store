@@ -432,7 +432,7 @@ function Products() {
                                 <div className="row">
                                     {currentItems.map((product, index) => (
                                         <div
-                                            className="col-lg-4 col-md-12 mb-4"
+                                            className="col-lg-4 col-md-6 col-sm-6 col-12 mb-4"
                                             key={product.id}
                                             style={{ zIndex: activeDropdown === product.id ? 1050 : 1, position: "relative" }}
                                         >
@@ -696,47 +696,47 @@ function Products() {
     </button>
 </div>
 
-<div className="d-flex justify-content-center">
-                            {category.map((c, index) => (
-                                <div key={c.id || index} className="align-items-center d-flex flex-column" style={{ background: "#e8e8e8", marginLeft: "10px", borderRadius: "10px", padding: "30px" }}>
-                                    <img src={c.image}
-                                        alt=""
-                                        style={{ width: "80px", height: "80px", objectFit: "cover" }}
-                                    />
-                                    <p>
-    <button
-        type="button"
-        className="btn btn-link text-dark text-decoration-none"
-        onClick={() => {
-            setSelectedCategory(c.id);
-            handlePageChange(1);
-        }}
-    >
-        {c.title}
-    </button>
-</p>
-                                </div>
-                            ))}
-
-                        </div>
-                        <section className="text-center container mt-5">
-                            <div className="row py-lg-5">
-                                <div className="col-lg-6 col-md-8 mx-auto">
-                                    <h1 className="fw-light">Trending Products</h1>
-                                    <p className="lead text-muted">
-                                        Something short and leading about the collection below—its contents
-                                    </p>
-                                </div>
-                            </div>
-                        </section>
-                        <div className="album py-5 bg-light">
-                            <div className="container">
-                                <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-                                    {featuredProducts.map((product, index) => (
-    <div
-        className="col-lg-4 col-md-12 mb-4"
-        key={product.id || index}
-    >
+<div className="d-flex justify-content-center flex-wrap gap-3 mb-4 px-2">
+    {category.map((c, index) => (
+        <div key={c.id || index} className="align-items-center d-flex flex-column p-3 rounded-3 shadow-sm bg-white" style={{ minWidth: "110px", maxWidth: "150px", border: "1px solid #e2e8f0" }}>
+            <img src={c.image}
+                alt={c.title}
+                style={{ width: "65px", height: "65px", objectFit: "cover", borderRadius: "50%" }}
+            />
+            <p className="mb-0 mt-2">
+                <button
+                    type="button"
+                    className="btn btn-link text-dark text-decoration-none fw-semibold p-0 text-truncate"
+                    style={{ maxWidth: "120px", fontSize: "0.85rem" }}
+                    onClick={() => {
+                        setSelectedCategory(c.id);
+                        handlePageChange(1);
+                    }}
+                >
+                    {c.title}
+                </button>
+            </p>
+        </div>
+    ))}
+</div>
+<section className="text-center container mt-5">
+    <div className="row py-lg-4">
+        <div className="col-lg-6 col-md-8 mx-auto">
+            <h1 className="fw-light">Trending Products</h1>
+            <p className="lead text-muted">
+                Something short and leading about the collection below—its contents
+            </p>
+        </div>
+    </div>
+</section>
+<div className="album py-4 bg-light">
+    <div className="container">
+        <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+            {featuredProducts.map((product, index) => (
+                <div
+                    className="col-lg-4 col-md-6 col-sm-6 col-12 mb-4"
+                    key={product.id || index}
+                >
                                             <div className="card shadow-sm h-100">
                                                 <div
                                                     className="bg-image hover-zoom ripple"

@@ -367,9 +367,9 @@ useEffect(() => {
         key={c.id || c.product?.id || index}
         className="row border-bottom mb-4"
     >
-                                                    <div className="col-md-2 mb-4 mb-md-0">
+                                                    <div className="col-4 col-md-2 mb-3">
                                                         <div
-                                                            className="bg-image ripple rounded-5 mb-4 overflow-hidden d-block"
+                                                            className="bg-image ripple rounded-3 mb-2 overflow-hidden d-block"
                                                             data-ripple-color="light"
                                                         >
                                                             <Link to={`/detail/${c?.product?.slug}`}>
@@ -377,54 +377,40 @@ useEffect(() => {
                                                                     src={c?.product?.image}
                                                                     className="w-100"
                                                                     alt=""
-                                                                    style={{ height: "100px", objectFit: "cover", borderRadius: "10px" }}
+                                                                    style={{ height: "90px", objectFit: "cover", borderRadius: "8px" }}
                                                                 />
                                                             </Link>
-                                                            <a href="#!">
-                                                                <div className="hover-overlay">
-                                                                    <div
-                                                                        className="mask"
-                                                                        style={{
-                                                                            backgroundColor: "hsla(0, 0%, 98.4%, 0.2)"
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                            </a>
                                                         </div>
                                                     </div>
-                                                    <div className="col-md-8 mb-4 mb-md-0">
-                                                        <Link to={`/detail/${c.product.slug}`} className="fw-bold text-dark mb-4">{c?.product?.title.slice(0, 20)}...</Link>
+                                                    <div className="col-8 col-md-7 mb-3">
+                                                        <Link to={`/detail/${c?.product?.slug}`} className="fw-bold text-dark mb-1 d-block text-truncate">{c?.product?.title}</Link>
                                                         {c.size != "No Size" &&
-                                                            <p className="mb-0">
+                                                            <p className="mb-0 small">
                                                                 <span className="text-muted me-2">Size:</span>
                                                                 <span>{c.size}</span>
                                                             </p>
                                                         }
                                                         {c.color != "No Color" &&
-                                                            <p className='mb-0'>
+                                                            <p className='mb-0 small'>
                                                                 <span className="text-muted me-2">Color:</span>
                                                                 <span>{c.color}</span>
                                                             </p>
                                                         }
-                                                        <p className='mb-0'>
+                                                        <p className='mb-0 small'>
                                                             <span className="text-muted me-2">Price:</span>
                                                             <span>${c.product.price}</span>
                                                         </p>
-                                                        <p className='mb-0'>
-                                                            <span className="text-muted me-2">Stock Qty:</span>
-                                                            <span>{c.product.stock_qty}</span>
-                                                        </p>
-                                                        <p className='mb-0'>
+                                                        <p className='mb-0 small'>
                                                             <span className="text-muted me-2">Vendor:</span>
-                                                            <span>{c.product.vendor.name}</span>
+                                                            <span>{c.product?.vendor?.name}</span>
                                                         </p>
-                                                        <p className="mt-3">
-                                                            <button onClick={() => handleDeleteClick(c.cart_id || cart_id, c.id)} className="btn btn-danger ">
-                                                                <small><i className="fas fa-trash me-2" />Remove</small>
+                                                        <p className="mt-2 mb-0">
+                                                            <button onClick={() => handleDeleteClick(c.cart_id || cart_id, c.id)} className="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                                                <small><i className="fas fa-trash me-1" />Remove</small>
                                                             </button>
                                                         </p>
                                                     </div>
-                                                    <div className="col-md-2 mb-4 mb-md-0">
+                                                    <div className="col-12 col-md-3 mb-3 d-flex flex-column align-items-md-end justify-content-center">
                                                         <div className="d-flex justify-content-center align-items-center">
                                                             <div className="form-outline">
                                                                 <input

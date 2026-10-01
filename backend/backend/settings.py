@@ -245,6 +245,10 @@ SERVER_EMAIL = FROM_EMAIL
 # Resend API Key for Cloud Platforms (bypasses Render SMTP port blocking)
 RESEND_API_KEY = env("RESEND_API_KEY", default="")
 
+# Brevo HTTP API (allows sending to ANY recipient without domain verification)
+BREVO_API_KEY = env("BREVO_API_KEY", default="")
+BREVO_SENDER_EMAIL = env("BREVO_SENDER_EMAIL", default="abdularayan9695@gmail.com")
+
 CORS_ALLOW_ALL_ORIGINS = True
 
 
