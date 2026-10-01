@@ -1,0 +1,14 @@
+Hello {{ instance.order.full_name|default:"Valued Customer" }},
+
+Great news! Your item "{{ instance.product.title }}" from order #{{ instance.order.oid }} has been shipped.
+
+Shipment Details:
+- Courier Partner: {{ delivery_couriers }}
+- Tracking ID: {{ tracking_id }}
+- Order ID: #{{ instance.order.oid }}
+- Quantity: {{ instance.qty }}
+
+Track your shipment in real time using the link below:
+{{ tracking_link }}
+
+Thank you for shopping with Ansari Store!

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Order Has Been Shipped!</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #333333;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f4f6f9; padding: 30px 10px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06); max-width: 600px; width: 100%;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 35px 30px; text-align: center; color: #ffffff;">
+              <h1 style="margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">Package Shipped! 📦</h1>
+              <p style="margin: 10px 0 0 0; font-size: 15px; opacity: 0.9;">Your item is on its way to you.</p>
+            </td>
+          </tr>
+
+          <!-- Content Body -->
+          <tr>
+            <td style="padding: 35px 35px 25px 35px;">
+              <p style="margin: 0 0 15px 0; font-size: 16px; line-height: 24px;">
+                Hello <strong>{{ instance.order.full_name|default:"Valued Customer" }}</strong>,
+              </p>
+              <p style="margin: 0 0 25px 0; font-size: 15px; line-height: 22px; color: #555555;">
+                We're excited to let you know that vendor <strong>{{ instance.vendor.name|default:"Partner Store" }}</strong> has handed over your package to the courier partner.
+              </p>
+
+              <!-- Tracking Info Card -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 25px;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td style="padding-bottom: 12px; font-size: 14px; color: #64748b; width: 45%;">
+                          <strong>Order ID:</strong>
+                        </td>
+                        <td style="padding-bottom: 12px; font-size: 15px; color: #1e293b; font-weight: 600;">
+                          #{{ instance.order.oid }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-bottom: 12px; font-size: 14px; color: #64748b;">
+                          <strong>Courier Partner:</strong>
+                        </td>
+                        <td style="padding-bottom: 12px; font-size: 15px; color: #4338ca; font-weight: 700;">
+                          {{ delivery_couriers }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding-bottom: 12px; font-size: 14px; color: #64748b;">
+                          <strong>Tracking ID / AWB:</strong>
+                        </td>
+                        <td style="padding-bottom: 12px; font-size: 15px; color: #0f172a; font-family: monospace; font-weight: 700; background: #e0e7ff; padding: 4px 8px; border-radius: 6px; display: inline-block;">
+                          {{ tracking_id }}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="font-size: 14px; color: #64748b;">
+                          <strong>Product:</strong>
+                        </td>
+                        <td style="font-size: 15px; color: #1e293b;">
+                          {{ instance.product.title }} (Qty: {{ instance.qty }})
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Action Button -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin: 30px 0 20px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="{{ tracking_link }}" target="_blank" style="background-color: #4f46e5; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; display: inline-block; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);">
+                      Track Order Live 🚀
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 20px 0 0 0; font-size: 13px; line-height: 20px; color: #94a3b8; text-align: center;">
+                If the button above does not work, copy and paste this URL into your browser:<br>
+                <a href="{{ tracking_link }}" style="color: #6366f1; word-break: break-all;">{{ tracking_link }}</a>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px 35px; text-align: center; color: #94a3b8; font-size: 13px;">
+              <p style="margin: 0 0 5px 0;">Thank you for shopping with Ansari Store.</p>
+              <p style="margin: 0;">Have questions? Reach out to support at any time.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
