@@ -169,7 +169,9 @@ useEffect(() => {
                         <Route path="/payment-success/:order_oid/" element={<PaymentSuccess />} />
                         <Route path="/invoice/:order_oid/" element={<Invoice />} />
                         <Route path="/search" element={<Search />} />
+                        <Route path="/track-order" element={<TrackOrder />} />
                         <Route path="/track-order/" element={<TrackOrder />} />
+                        <Route path="/track-order/:order_oid" element={<TrackOrder />} />
                         <Route path="/track-order/:order_oid/" element={<TrackOrder />} />
 
                         {/* Customer Routes */}
