@@ -134,9 +134,16 @@ function Register() {
                                                             className="form-control"
                                                         />
                                                     </div>
-                                                    <p className='fw-bold text-danger'>
-                                                        {password2 !== password ? 'Passwords do not match' : ''}
-                                                    </p>
+                                                    {password2.length > 0 && password2 !== password && (
+                                                        <p className='fw-bold text-danger mb-3'>
+                                                            <i className="fas fa-times-circle me-1" /> Passwords do not match
+                                                        </p>
+                                                    )}
+                                                    {password2.length > 0 && password2 === password && (
+                                                        <p className='fw-bold text-success mb-3'>
+                                                            <i className="fas fa-check-circle me-1" /> Passwords match
+                                                        </p>
+                                                    )}
 
                                                     <button className='btn btn-primary w-100' type="submit" disabled={isLoading}>
                                                         {isLoading ? (

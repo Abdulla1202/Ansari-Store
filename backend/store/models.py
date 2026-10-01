@@ -308,21 +308,16 @@ class Product(models.Model):
 
     # Returns the gallery images linked to this product
     def gallery(self):
-        gallery = Gallery.objects.filter(product=self)
-        return gallery
-    
-    # def specification(self):
-    #     return Specification.objects.filter(product=self)
+        return self.gallery_set.all()
 
     def specification(self):
-        return Specification.objects.filter(product=self)
-
+        return self.specification_set.all()
 
     def color(self):
-        return Color.objects.filter(product=self)
-    
+        return self.color_set.all()
+
     def size(self):
-        return Size.objects.filter(product=self)
+        return self.size_set.all()
 
     # Returns a list of products frequently bought together with this product
     def frequently_bought_together(self):

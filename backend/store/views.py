@@ -74,12 +74,12 @@ class BrandListView(generics.ListAPIView):
 
 class FeaturedProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
-    queryset = Product.objects.filter(status="published", featured=True)[:3]
+    queryset = Product.objects.filter(status="published", featured=True).select_related('category', 'vendor').prefetch_related('gallery_set', 'color_set', 'size_set', 'specification_set')[:3]
     permission_classes = (AllowAny,)
 
 class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
-    queryset = Product.objects.filter(status="published")
+    queryset = Product.objects.filter(status="published").select_related('category', 'vendor').prefetch_related('gallery_set', 'color_set', 'size_set', 'specification_set')
     permission_classes = (AllowAny,)
 
 class ProductDetailView(generics.RetrieveAPIView):
@@ -88,7 +88,7 @@ class ProductDetailView(generics.RetrieveAPIView):
     def get_object(self):
         # Retrieve the product using the provided slug from the URL
         slug = self.kwargs.get('slug')
-        return Product.objects.get(slug=slug)
+        return Product.objects.select_related('category', 'vendor').prefetch_related('gallery_set', 'color_set', 'size_set', 'specification_set').get(slug=slug)
     
 class CartApiView(generics.ListCreateAPIView):
     serializer_class = CartSerializer
@@ -298,18 +298,30 @@ class CartDetailView(generics.RetrieveAPIView):
 
 class CartItemDeleteView(generics.DestroyAPIView):
     serializer_class = CartSerializer
-    lookup_field = 'cart_id'  
+    permission_classes = (AllowAny,)
 
     def get_object(self):
-        cart_id = self.kwargs['cart_id']
-        item_id = self.kwargs['item_id']
+        cart_id = self.kwargs.get('cart_id')
+        item_id = self.kwargs.get('item_id')
         user_id = self.kwargs.get('user_id')
 
-        if user_id is not None:
-            user = get_object_or_404(User, id=user_id)
-            cart = get_object_or_404(Cart, cart_id=cart_id, id=item_id, user=user)
-        else:
-            cart = get_object_or_404(Cart, cart_id=cart_id, id=item_id)
+        cart = None
+        if user_id is not None and str(user_id) not in ['0', 'undefined', 'null', '']:
+            user = User.objects.filter(id=user_id).first()
+            if user:
+                cart = Cart.objects.filter(id=item_id, user=user).first()
+                if not cart and cart_id:
+                    cart = Cart.objects.filter(id=item_id, cart_id=cart_id).first()
+
+        if not cart and cart_id:
+            cart = Cart.objects.filter(id=item_id, cart_id=cart_id).first()
+
+        if not cart:
+            cart = Cart.objects.filter(id=item_id).first()
+
+        if not cart:
+            from rest_framework.exceptions import NotFound
+            raise NotFound(detail="Cart item not found")
 
         return cart
     

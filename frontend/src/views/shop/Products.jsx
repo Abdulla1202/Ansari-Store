@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { FaCheckCircle, FaShoppingCart, FaSpinner } from 'react-icons/fa';
 
 import apiInstance from '../../utils/axios';
@@ -13,38 +13,68 @@ import { CartContext } from '../plugin/Context';
 
 function Products() {
 
-    const [featuredProducts, setFeaturedProducts] = useState([])
-    const [products, setProducts] = useState([])
-    const [category, setCategory] = useState([])
-    const [brand, setBrand] = useState([])
-    const [selectedCategory, setSelectedCategory] = useState(null)
+    const [searchParams, setSearchParams] = useSearchParams();
 
+    const getCachedData = (key, fallback = []) => {
+        try {
+            const item = sessionStorage.getItem(key);
+            return item ? JSON.parse(item) : fallback;
+        } catch (e) {
+            return fallback;
+        }
+    };
+
+    const [featuredProducts, setFeaturedProducts] = useState(() => getCachedData('cached_featured_products', []));
+    const [products, setProducts] = useState(() => getCachedData('cached_products', []));
+    const [category, setCategory] = useState(() => getCachedData('cached_category', []));
+    const [brand, setBrand] = useState(() => getCachedData('cached_brand', []));
+    const [selectedCategory, setSelectedCategory] = useState(null);
 
     let [isAddingToCart, setIsAddingToCart] = useState("Add To Cart");
     const [loadingStates, setLoadingStates] = useState({});
-    let [loading, setLoading] = useState(true);
+    let [loading, setLoading] = useState(() => !sessionStorage.getItem('cached_products'));
 
-    const axios = apiInstance
-    const addon = Addon()
-    const currentAddress = GetCurrentAddress()
-    const userData = UserData()
-    let cart_id = CartID()
+    const axios = apiInstance;
+    const addon = Addon();
+    const currentAddress = GetCurrentAddress();
+    const userData = UserData();
+    let cart_id = CartID();
 
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedColors, setSelectedColors] = useState({});
     const [selectedSize, setSelectedSize] = useState({});
-    const [colorImage, setColorImage] = useState("")
-    const [colorValue, setColorValue] = useState("No Color")
-    const [sizeValue, setSizeValue] = useState("No Size")
-    const [qtyValue, setQtyValue] = useState(1)
+    const [colorImage, setColorImage] = useState("");
+    const [colorValue, setColorValue] = useState("No Color");
+    const [sizeValue, setSizeValue] = useState("No Size");
+    const [qtyValue, setQtyValue] = useState(1);
     let [cartCount, setCartCount] = useContext(CartContext);
 
     // Pagination
     // Define the number of items to be displayed per page
     const itemsPerPage = 6;
 
-    // State hook to manage the current page being displayed
-    const [currentPage, setCurrentPage] = useState(1);
+    // State hook to manage the current page being displayed (persisted in URL and sessionStorage)
+    const initialPage = parseInt(searchParams.get('page') || sessionStorage.getItem('products_current_page') || '1', 10);
+    const [currentPage, setCurrentPage] = useState(initialPage > 0 ? initialPage : 1);
+
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+        setSearchParams((prev) => {
+            const p = new URLSearchParams(prev);
+            p.set('page', newPage);
+            return p;
+        });
+        sessionStorage.setItem('products_current_page', newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Synchronize page if URL search params change (e.g. browser back / forward button)
+    useEffect(() => {
+        const pageFromUrl = parseInt(searchParams.get('page') || sessionStorage.getItem('products_current_page') || '1', 10);
+        if (pageFromUrl > 0 && pageFromUrl !== currentPage) {
+            setCurrentPage(pageFromUrl);
+        }
+    }, [searchParams]);
 
     // Calculate the index of the last item on the current page
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -64,10 +94,10 @@ function Products() {
     })
     : products;
 
-const currentItems = filteredProducts.slice(
-    indexOfFirstItem,
-    indexOfLastItem
-);
+    const currentItems = filteredProducts.slice(
+        indexOfFirstItem,
+        indexOfLastItem
+    );
 
     // Calculate the total number of pages needed based on the total number of items
     const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -75,59 +105,25 @@ const currentItems = filteredProducts.slice(
     // Generate an array of page numbers for pagination control
     const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1);
 
-    // Explanation:
-    // - `indexOfLastItem` and `indexOfFirstItem` are used to determine the range of items
-    //   to be displayed on the current page.
-    // - `currentItems` holds the subset of products to be displayed on the current page.
-    // - `totalPages` calculates the total number of pages required based on the total number
-    //   of items and the specified items per page.
-    // - `pageNumbers` is an array containing the page numbers from 1 to the total number of pages.
-    //   It's often used for generating pagination controls or navigation.
-
-
-    // Define an async function for fetching data from an API endpoint and updating the state.
-    // This function takes two parameters:
-    // - endpoint: The API endpoint to fetch data from.
-    // - setDataFunction: The state update function to set the retrieved data.
-    async function fetchData(endpoint, setDataFunction) {
+    async function fetchData(endpoint, setDataFunction, cacheKey) {
         try {
-            // Send an HTTP GET request to the provided endpoint using Axios.
             const response = await axios.get(endpoint);
-
-            // If the request is successful, update the state with the retrieved data.
             setDataFunction(response.data);
+            if (cacheKey) {
+                sessionStorage.setItem(cacheKey, JSON.stringify(response.data));
+            }
         } catch (error) {
-            // If an error occurs during the request, log the error to the console.
             console.log(error);
         } finally {
             setLoading(false);
         }
     }
 
-    // Use the useEffect hook to execute code when the component mounts (empty dependency array).
     useEffect(() => {
-        // Fetch and set the 'products' data by calling fetchData with the 'products/' endpoint.
-        fetchData('products/', setProducts);
-
-    }, []);
-
-    // Use the useEffect hook to execute code when the component mounts (empty dependency array).
-    useEffect(() => {
-        // Fetch and set the 'products' data by calling fetchData with the 'products/' endpoint.
-        fetchData('featured-products/', setFeaturedProducts);
-    }, []);
-
-    // Use another useEffect hook to execute code when the component mounts (empty dependency array).
-    useEffect(() => {
-        // Fetch and set the 'category' data by calling fetchData with the 'category/' endpoint.
-        fetchData('category/', setCategory);
-    }, []);
-
-    // Fetch and set the 'brand' data by calling fetchData with the 'brand/' endpoint.
-
-    useEffect(() => {
-        // Fetch and set the 'category' data by calling fetchData with the 'category/' endpoint.
-        fetchData('brand/', setBrand);
+        fetchData('products/', setProducts, 'cached_products');
+        fetchData('featured-products/', setFeaturedProducts, 'cached_featured_products');
+        fetchData('category/', setCategory, 'cached_category');
+        fetchData('brand/', setBrand, 'cached_brand');
     }, []);
 
 
@@ -634,7 +630,7 @@ const currentItems = filteredProducts.slice(
                             <nav className='d-flex  gap-1 pt-2'>
                                 <ul className='pagination'>
                                     <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                                        <button className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>
+                                        <button className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
                                             <i className="ci-arrow-left me-2" />
                                             Previous
                                         </button>
@@ -643,7 +639,7 @@ const currentItems = filteredProducts.slice(
                                 <ul className="pagination">
                                     {pageNumbers.map((number) => (
                                         <li key={number} className={`page-item ${currentPage === number ? 'active' : ''}`}>
-                                            <button className="page-link" onClick={() => setCurrentPage(number)}>
+                                            <button className="page-link" onClick={() => handlePageChange(number)}>
                                                 {number}
                                             </button>
                                         </li>
@@ -652,7 +648,7 @@ const currentItems = filteredProducts.slice(
 
                                 <ul className="pagination">
                                     <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                                        <button className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>
+                                        <button className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
                                             Next
                                             <i className="ci-arrow-right ms-3" />
 
@@ -693,7 +689,7 @@ const currentItems = filteredProducts.slice(
         className="btn btn-outline-dark"
         onClick={() => {
             setSelectedCategory(null);
-            setCurrentPage(1);
+            handlePageChange(1);
         }}
     >
         All Products
@@ -713,7 +709,7 @@ const currentItems = filteredProducts.slice(
         className="btn btn-link text-dark text-decoration-none"
         onClick={() => {
             setSelectedCategory(c.id);
-            setCurrentPage(1);
+            handlePageChange(1);
         }}
     >
         {c.title}

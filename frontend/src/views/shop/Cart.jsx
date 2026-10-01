@@ -217,51 +217,44 @@ useEffect(() => {
 
     // Remove Item From Cart
   const handleDeleteClick = async (cartId, itemId) => {
+    // Clear from guest_cart if stored locally
+    const guestCart = JSON.parse(localStorage.getItem("guest_cart") || "[]");
+    const updatedGuestCart = guestCart.filter((item) => item.id !== itemId && item.product?.id !== itemId);
+    localStorage.setItem("guest_cart", JSON.stringify(updatedGuestCart));
 
     // ================= GUEST CART =================
     if (!userData?.user_id) {
-
-        const guestCart = JSON.parse(
-            localStorage.getItem("guest_cart") || "[]"
-        );
-
-        const updatedCart = guestCart.filter(
-            (item) => item.id !== itemId
-        );
-
-        localStorage.setItem(
-            "guest_cart",
-            JSON.stringify(updatedCart)
-        );
-
-        setCart(updatedCart);
-        setCartCount(updatedCart.length);
-
+        setCart(updatedGuestCart);
+        setCartCount(updatedGuestCart.length);
         return;
     }
 
     // ================= LOGGED-IN CART =================
-
-    const url = `cart-delete/${cartId}/${itemId}/${userData.user_id}/`;
+    const activeCartId = cartId || cart_id;
+    const url = `cart-delete/${activeCartId}/${itemId}/${userData.user_id}/`;
 
     try {
-
         await axios.delete(url);
+        await fetchCartData(cart_id, userData?.user_id);
+        await fetchCartTotal(cart_id, userData?.user_id);
 
-        fetchCartData(cart_id, userData?.user_id);
-        fetchCartTotal(cart_id, userData?.user_id);
-
-        const cart_url =
-            `cart-list/${cart_id}/${userData.user_id}/`;
-
+        const cart_url = `cart-list/${cart_id}/${userData.user_id}/`;
         const response = await axios.get(cart_url);
-
         setCartCount(response.data.length);
-
     } catch (error) {
-        console.error("Error deleting item:", error);
+        console.error("Error deleting item, trying fallback:", error);
+        try {
+            await axios.delete(`cart-delete/${activeCartId}/${itemId}/`);
+            await fetchCartData(cart_id, userData?.user_id);
+            await fetchCartTotal(cart_id, userData?.user_id);
+            const cart_url = `cart-list/${cart_id}/${userData.user_id}/`;
+            const response = await axios.get(cart_url);
+            setCartCount(response.data.length);
+        } catch (fallbackError) {
+            console.error("Cart item delete failed:", fallbackError);
+        }
     }
-};
+  };
     
 
 
@@ -426,7 +419,7 @@ useEffect(() => {
                                                             <span>{c.product.vendor.name}</span>
                                                         </p>
                                                         <p className="mt-3">
-                                                            <button onClick={() => handleDeleteClick(cart_id, c.id)} className="btn btn-danger ">
+                                                            <button onClick={() => handleDeleteClick(c.cart_id || cart_id, c.id)} className="btn btn-danger ">
                                                                 <small><i className="fas fa-trash me-2" />Remove</small>
                                                             </button>
                                                         </p>
