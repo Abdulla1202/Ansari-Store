@@ -8,16 +8,14 @@ function UserData() {
     let refresh_token = Cookies.get('refresh_token');
 
     if (access_token && refresh_token) {
-        // Both access and refresh tokens exist
-        // Decode the refresh token to extract user information
-        const token = refresh_token;
-        const decoded = jwtDecode(token);
-
-        // Extract the user's unique identifier (user_id) from the decoded token
-        const user_id = decoded.user_id;
-
-        // Return the decoded user data, which may include user information
-        return decoded;
+        try {
+            const token = refresh_token;
+            const decoded = jwtDecode(token);
+            return decoded;
+        } catch (error) {
+            console.warn("Invalid token in UserData:", error);
+            return null;
+        }
     } else {
         // One or both tokens (access or refresh) are missing
         // This block handles the case when either token is not present in the cookies.

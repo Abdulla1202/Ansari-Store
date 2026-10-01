@@ -102,21 +102,25 @@ export const logout = () => {
 
 // Function to set the authenticated user on page load
 export const setUser = async () => {
-    // Retrieving access and refresh tokens from cookies
-    const accessToken = Cookies.get('access_token');
-    const refreshToken = Cookies.get('refresh_token');
+    try {
+        const accessToken = Cookies.get('access_token');
+        const refreshToken = Cookies.get('refresh_token');
 
-    // Checking if tokens are present
-    if (!accessToken || !refreshToken) {
-        return;
-    }
+        if (!accessToken || !refreshToken) {
+            return;
+        }
 
-    // If access token is expired, refresh it; otherwise, set the authenticated user
-    if (isAccessTokenExpired(accessToken)) {
-        const response = await getRefreshToken(refreshToken);
-        setAuthUser(response.access, response.refresh);
-    } else {
-        setAuthUser(accessToken, refreshToken);
+        if (isAccessTokenExpired(accessToken)) {
+            const response = await getRefreshToken(refreshToken);
+            setAuthUser(response.access, response.refresh);
+        } else {
+            setAuthUser(accessToken, refreshToken);
+        }
+    } catch (error) {
+        console.warn("Session restore failed, treating as guest user:", error);
+        Cookies.remove('access_token');
+        Cookies.remove('refresh_token');
+        useAuthStore.getState().setUser(null);
     }
 };
 

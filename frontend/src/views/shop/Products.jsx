@@ -96,12 +96,11 @@ const currentItems = filteredProducts.slice(
 
             // If the request is successful, update the state with the retrieved data.
             setDataFunction(response.data);
-            if (products) {
-                setLoading(false)
-            }
         } catch (error) {
             // If an error occurs during the request, log the error to the console.
             console.log(error);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -794,11 +793,14 @@ const currentItems = filteredProducts.slice(
                 </div>
             }
 
-            {loading === true &&
-                <div className="container text-center">
-                    <img className='' src="https://cdn.dribbble.com/users/2046015/screenshots/5973727/06-loader_telega.gif" alt="" />
+            {loading === true && (
+                <div className="container text-center py-5">
+                    <div className="spinner-border text-primary my-4" role="status" style={{ width: "3rem", height: "3rem" }}>
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="text-muted fw-semibold">Loading products...</p>
                 </div>
-            }
+            )}
         </>
 
 
