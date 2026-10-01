@@ -46,9 +46,18 @@ console.log("VENDOR ID:", userData?.vendor_id);
                     </Link>
 
                     <div className="d-flex align-items-center gap-2 d-lg-none">
-                        <Link className="btn btn-danger btn-sm rounded-pill px-3 py-1 d-flex align-items-center gap-1 shadow-sm" to="/cart/">
-                            <i className='fas fa-shopping-cart' style={{ fontSize: "13px" }}></i>
-                            <span className="badge bg-white text-danger rounded-pill px-1" style={{ fontSize: "11px" }}>
+                        {isLoggedIn() ? (
+                            <Link className="btn btn-outline-light btn-sm rounded-pill px-2 py-1 d-flex align-items-center gap-1" to="/customer/account/" title="My Account" style={{ fontSize: "12px" }}>
+                                <i className="fas fa-user-circle"></i>
+                            </Link>
+                        ) : (
+                            <Link className="btn btn-primary btn-sm rounded-pill px-2 py-1 fw-bold d-flex align-items-center gap-1" to="/login" style={{ fontSize: "12px" }}>
+                                <i className="fas fa-sign-in-alt"></i> Login
+                            </Link>
+                        )}
+                        <Link className="btn btn-danger btn-sm rounded-pill px-2 py-1 d-flex align-items-center gap-1 shadow-sm" to="/cart/">
+                            <i className='fas fa-shopping-cart' style={{ fontSize: "12px" }}></i>
+                            <span className="badge bg-white text-danger rounded-pill px-1" style={{ fontSize: "10px" }}>
                                 {cartCount || 0}
                             </span>
                         </Link>
@@ -58,6 +67,48 @@ console.log("VENDOR ID:", userData?.vendor_id);
                     </div>
 
                     <div className="collapse navbar-collapse" id="navbarSupportedContent">
+                        {/* Mobile Account Access Card */}
+                        <div className="d-lg-none p-3 my-2 rounded-3 border border-secondary border-opacity-25" style={{ backgroundColor: "rgba(255, 255, 255, 0.06)" }}>
+                            {isLoggedIn() ? (
+                                <div className="d-flex align-items-center justify-content-between">
+                                    <div className="d-flex align-items-center gap-2 text-white">
+                                        <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style={{ width: "32px", height: "32px" }}>
+                                            <i className="fas fa-user"></i>
+                                        </div>
+                                        <div>
+                                            <div className="fw-bold small">{userData?.username || "Account"}</div>
+                                            <span className="text-success small" style={{ fontSize: "11px" }}>● Logged In</span>
+                                        </div>
+                                    </div>
+                                    <div className="d-flex gap-2">
+                                        <Link className="btn btn-sm btn-outline-light rounded-pill px-3 py-1" to="/customer/account/" style={{ fontSize: "12px" }}>
+                                            Profile
+                                        </Link>
+                                        <Link className="btn btn-sm btn-outline-danger rounded-pill px-3 py-1" to="/logout" style={{ fontSize: "12px" }}>
+                                            Logout
+                                        </Link>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    <div className="text-white fw-bold small mb-1">
+                                        <i className="fas fa-user-circle me-1 text-primary"></i> Account Login / Register
+                                    </div>
+                                    <p className="text-secondary mb-2" style={{ fontSize: "12px" }}>
+                                        Sign in to place orders, track shipments & save wishlist
+                                    </p>
+                                    <div className="d-flex gap-2">
+                                        <Link className="btn btn-primary btn-sm flex-fill rounded-pill py-2 fw-bold text-center" to="/login">
+                                            <i className="fas fa-sign-in-alt me-1"></i> Login
+                                        </Link>
+                                        <Link className="btn btn-outline-light btn-sm flex-fill rounded-pill py-2 fw-bold text-center" to="/register">
+                                            <i className="fas fa-user-plus me-1"></i> Register
+                                        </Link>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <ul className="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center">
                             <li className="nav-item">
                                 <Link className="nav-link fw-semibold px-3 text-warning" to="/track-order/">
@@ -154,6 +205,61 @@ console.log("VENDOR ID:", userData?.vendor_id);
                     </div>
                 </div>
             </nav>
+
+            {/* Mobile Fixed Bottom Navigation Bar */}
+            <div 
+                className="d-block d-lg-none fixed-bottom shadow-lg" 
+                style={{ 
+                    backgroundColor: "#0f172a", 
+                    borderTop: "1px solid rgba(255, 255, 255, 0.12)",
+                    zIndex: 1040,
+                    backdropFilter: "blur(10px)"
+                }}
+            >
+                <div className="d-flex justify-content-around align-items-center py-2 px-1">
+                    <Link to="/" className="text-center text-decoration-none py-1" style={{ flex: 1, color: "#cbd5e1" }}>
+                        <i className="fas fa-home d-block mb-1" style={{ fontSize: "18px" }}></i>
+                        <span style={{ fontSize: "10px", fontWeight: "500" }}>Home</span>
+                    </Link>
+
+                    <Link to="/search" className="text-center text-decoration-none py-1" style={{ flex: 1, color: "#cbd5e1" }}>
+                        <i className="fas fa-search d-block mb-1" style={{ fontSize: "18px" }}></i>
+                        <span style={{ fontSize: "10px", fontWeight: "500" }}>Search</span>
+                    </Link>
+
+                    <Link to="/cart/" className="text-center text-decoration-none py-1 position-relative" style={{ flex: 1, color: "#cbd5e1" }}>
+                        <div className="position-relative d-inline-block">
+                            <i className="fas fa-shopping-cart" style={{ fontSize: "18px" }}></i>
+                            {Boolean(cartCount && cartCount > 0) && (
+                                <span 
+                                    className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                    style={{ fontSize: "9px", padding: "2px 5px" }}
+                                >
+                                    {cartCount}
+                                </span>
+                            )}
+                        </div>
+                        <span className="d-block" style={{ fontSize: "10px", fontWeight: "500", marginTop: "2px" }}>Cart</span>
+                    </Link>
+
+                    <Link to="/track-order/" className="text-center text-decoration-none text-warning py-1" style={{ flex: 1 }}>
+                        <i className="fas fa-truck d-block mb-1" style={{ fontSize: "18px" }}></i>
+                        <span style={{ fontSize: "10px", fontWeight: "600" }}>Track</span>
+                    </Link>
+
+                    {isLoggedIn() ? (
+                        <Link to="/customer/account/" className="text-center text-decoration-none py-1" style={{ flex: 1, color: "#cbd5e1" }}>
+                            <i className="fas fa-user-circle d-block mb-1 text-primary" style={{ fontSize: "18px" }}></i>
+                            <span style={{ fontSize: "10px", fontWeight: "500" }}>Account</span>
+                        </Link>
+                    ) : (
+                        <Link to="/login" className="text-center text-decoration-none py-1" style={{ flex: 1, color: "#38bdf8" }}>
+                            <i className="fas fa-sign-in-alt d-block mb-1" style={{ fontSize: "18px" }}></i>
+                            <span style={{ fontSize: "10px", fontWeight: "700" }}>Login</span>
+                        </Link>
+                    )}
+                </div>
+            </div>
         </div>
     )
 }
