@@ -47,66 +47,78 @@ function Orders() {
             <div className="row row-offcanvas row-offcanvas-left h-100">
                 <Sidebar />
                 <div className="col-md-9 col-lg-10 main">
-                    <div className="mb-3 mt-3" style={{ marginBottom: 300 }}>
-                        <div>
-                            <h4><i className="bi bi-cart-check-fill"></i> All Orders  </h4>
+                    <div className="mb-3 mt-3">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h4 className="fw-bold mb-0"><i className="bi bi-cart-check-fill text-primary me-2"></i> All Orders</h4>
+                            {!loading && orders?.length > 0 && (
+                                <span className="badge bg-light text-secondary border px-3 py-2 rounded-pill">
+                                    {orders.length} Total
+                                </span>
+                            )}
+                        </div>
 
-                            <table className="table">
-                                <thead className="table-dark">
-                                    <tr>
-                                        <th scope="col">#ID</th>
-                                        <th scope="col">Name</th>
-                                        <th scope="col">Date</th>
-                                        <th scope="col">Status</th>
-                                        <th scope="col">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {loading && (
+                        <div className="card shadow-sm border-0 rounded-4 overflow-hidden">
+                            <div className="table-responsive">
+                                <table className="table align-middle mb-0">
+                                    <thead className="table-dark">
                                         <tr>
-                                            <td colSpan="5" className="text-center py-4">
-                                                <div className="spinner-border text-primary" role="status">
-                                                    <span className="visually-hidden">Loading...</span>
-                                                </div>
-                                                <p className="text-muted mt-2 small">Loading your orders...</p>
-                                            </td>
+                                            <th scope="col">#ID</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Date</th>
+                                            <th scope="col">Status</th>
+                                            <th scope="col">Action</th>
                                         </tr>
-                                    )}
+                                    </thead>
+                                    <tbody>
+                                        {loading && (
+                                            <tr>
+                                                <td colSpan="5" className="text-center py-4">
+                                                    <div className="spinner-border text-primary" role="status">
+                                                        <span className="visually-hidden">Loading...</span>
+                                                    </div>
+                                                    <p className="text-muted mt-2 small">Loading your orders...</p>
+                                                </td>
+                                            </tr>
+                                        )}
 
-                                    {!loading && orders?.map((o, index) => (
-                                        <tr key={index}>
-                                            <th scope="row">#{o.oid}</th>
-                                            <td>{o.full_name}</td>
-                                            <td>{moment(o.date).format("MM/DD/YYYY")}</td>
-                                            <td>
-                                                <span className={`badge ${
-                                                    o.order_status === 'Fulfilled' ? 'bg-success' :
-                                                    o.order_status === 'Partially Fulfilled' ? 'bg-primary' :
-                                                    o.order_status === 'Processing' ? 'bg-warning text-dark' : 'bg-secondary'
-                                                }`}>
-                                                    {o.order_status}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <Link to={`/vendor/orders/${o.oid}/`} className="btn btn-primary btn-sm mb-1 me-1" title="View Order">
-                                                    <i className="fas fa-eye" />
-                                                </Link>
-                                                <Link to={`/track-order/${o.oid}/`} className="btn btn-outline-info btn-sm mb-1" title="Track Order">
-                                                    <i className="fas fa-truck" />
-                                                </Link>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                        {!loading && orders?.map((o, index) => (
+                                            <tr key={index}>
+                                                <th scope="row" className="font-monospace">#{o.oid}</th>
+                                                <td className="fw-semibold">{o.full_name}</td>
+                                                <td className="small text-muted">{moment(o.date).format("MM/DD/YYYY")}</td>
+                                                <td>
+                                                    <span className={`badge ${
+                                                        o.order_status === 'Fulfilled' ? 'bg-success' :
+                                                        o.order_status === 'Partially Fulfilled' ? 'bg-primary' :
+                                                        o.order_status === 'Processing' ? 'bg-warning text-dark' : 'bg-secondary'
+                                                    }`}>
+                                                        {o.order_status}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div className="d-flex gap-1">
+                                                        <Link to={`/vendor/orders/${o.oid}/`} className="btn btn-primary btn-sm rounded-pill px-2 py-1" title="View Order">
+                                                            <i className="fas fa-eye me-1" /> View
+                                                        </Link>
+                                                        <Link to={`/track-order/${o.oid}/`} className="btn btn-outline-info btn-sm rounded-pill px-2 py-1" title="Track Order">
+                                                            <i className="fas fa-truck" />
+                                                        </Link>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
 
-                                    {!loading && orders?.length === 0 && (
-                                        <tr>
-                                            <td colSpan="5" className="text-center">
-                                                <h5 className="mt-4 p-3 text-muted">No orders found</h5>
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                                        {!loading && orders?.length === 0 && (
+                                            <tr>
+                                                <td colSpan="5" className="text-center py-5 text-muted">
+                                                    <h5>No orders found</h5>
+                                                    <p className="small mb-0">When customers place orders, they will appear here.</p>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>

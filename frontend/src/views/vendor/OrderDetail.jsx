@@ -7,331 +7,236 @@ import Sidebar from './Sidebar';
 
 
 function OrderDetail() {
+  const userData = UserData();
+  const param = useParams();
+  const axios = apiInstance;
 
-  const [order, setOrder] = useState([])
-  const [orderItems, setOrderItems] = useState([])
+  const [order, setOrder] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`vendor_order_detail_${param?.oid}`);
+      return cached ? JSON.parse(cached) : {};
+    } catch {
+      return {};
+    }
+  });
 
-  if (UserData()?.vendor_id === 0) {
+  const [orderItems, setOrderItems] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`vendor_order_detail_${param?.oid}`);
+      return cached ? JSON.parse(cached).orderitem || [] : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [loading, setLoading] = useState(!order?.oid);
+
+  if (userData?.vendor_id === 0) {
     window.location.href = '/vendor/register/'
   }
 
-  const axios = apiInstance
-  const userData = UserData()
-  const param = useParams()
-
- useEffect(() => {
-
-    if (!userData?.vendor_id || !param?.oid) {
-        console.log(
-            "Waiting for vendor ID or order ID...",
-            userData?.vendor_id,
-            param?.oid
-        );
-        return;
-    }
+  useEffect(() => {
+    if (!userData?.vendor_id || !param?.oid) return;
 
     const fetchData = async () => {
-
-        try {
-
-            console.log(
-                "Fetching order:",
-                userData.vendor_id,
-                param.oid
-            );
-
-            const response = await axios.get(
-                `vendor/orders/${userData.vendor_id}/${param.oid}/`
-            );
-
-            console.log("ORDER DETAIL:", response.data);
-
-            setOrder(response.data);
-            setOrderItems(response.data.orderitem || []);
-
-        } catch (error) {
-
-            console.error(
-                "Error fetching order detail:",
-                error.response?.data || error.message
-            );
-
-        }
+      try {
+        const response = await axios.get(
+          `vendor/orders/${userData.vendor_id}/${param.oid}/`
+        );
+        setOrder(response.data);
+        setOrderItems(response.data.orderitem || []);
+        setLoading(false);
+        localStorage.setItem(`vendor_order_detail_${param.oid}`, JSON.stringify(response.data));
+      } catch (error) {
+        console.error("Error fetching order detail:", error.response?.data || error.message);
+        setLoading(false);
+      }
     };
 
     fetchData();
+  }, [userData?.vendor_id, param?.oid]);
 
-}, [userData?.vendor_id, param?.oid]);
   return (
-    <div className="container-fluid" id="main" >
+    <div className="container-fluid" id="main">
       <div className="row row-offcanvas row-offcanvas-left h-100">
         <Sidebar />
         <div className="col-md-9 col-lg-10 main">
-          <div className="mb-3 mt-3" style={{ marginBottom: 300 }}>
-            <div>
-              <main className="mb-5">
-                {/* Container for demo purpose */}
-                <div className="container px-4">
-                  {/* Section: Summary */}
-                  <section className="mb-5">
-                    <h3 className="mb-3">
-                      {" "}
-                      <i className="fas fa-shopping-cart text-primary" /> #{order.oid}{" "}
-                    </h3>
-
-                    <div className="row gx-xl-5">
-                      <div className="col-lg-3 mb-4 mb-lg-0">
-                        <div
-                          className="rounded shadow"
-                          style={{ backgroundColor: "#B2DFDB" }}
-                        >
-                          <div className="card-body">
-                            <div className="d-flex align-items-center">
-                              <div className="">
-                                <p className="mb-1">Total</p>
-                                <h2 className="mb-0">
-                                  ${order?.total}
-                                  <span
-                                    className=""
-                                    style={{ fontSize: "0.875rem" }}
-                                  ></span>
-                                </h2>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="col-lg-3 mb-4 mb-lg-0">
-                        <div
-                          className="rounded shadow"
-                          style={{ backgroundColor: "#D1C4E9" }}
-                        >
-                          <div className="card-body">
-                            <div className="d-flex align-items-center">
-                              <div className="">
-                                <p className="mb-1">Payment Status</p>
-                                <h2 className="mb-0">
-                                  {order?.payment_status?.toUpperCase()}
-
-                                  <span
-                                    className=""
-                                    style={{ fontSize: "0.875rem" }}
-                                  ></span>
-                                </h2>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="col-lg-3 mb-4 mb-lg-0">
-                        <div
-                          className="rounded shadow"
-                          style={{ backgroundColor: "#BBDEFB" }}
-                        >
-                          <div className="card-body">
-                            <div className="d-flex align-items-center">
-                              <div className="">
-                                <p className="mb-1">Order Status</p>
-                                <h2 className="mb-0">
-                                  {order.order_status}
-                                  <span
-                                    className=""
-                                    style={{ fontSize: "0.875rem" }}
-                                  ></span>
-                                </h2>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="col-lg-3 mb-4 mb-lg-0">
-                        <div
-                          className="rounded shadow"
-                          style={{ backgroundColor: "#bbfbeb" }}
-                        >
-                          <div className="card-body">
-                            <div className="d-flex align-items-center">
-                              <div className="">
-                                <p className="mb-1">Shipping Amount</p>
-                                <h2 className="mb-0">
-                                  ${order.shipping_amount}
-                                  <span
-                                    className=""
-                                    style={{ fontSize: "0.875rem" }}
-                                  ></span>
-                                </h2>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="col-lg-4 mb-4 mb-lg-0 mt-5">
-                        <div
-                          className="rounded shadow"
-                          style={{ backgroundColor: "#bbf7fb" }}
-                        >
-                          <div className="card-body">
-                            <div className="d-flex align-items-center">
-                              <div className="">
-                                <p className="mb-1">Tax Fee</p>
-                                <h2 className="mb-0">
-                                  ${order.tax_fee}
-
-                                  <span
-                                    className=""
-                                    style={{ fontSize: "0.875rem" }}
-                                  ></span>
-                                </h2>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="col-lg-4 mb-4 mb-lg-0 mt-5">
-                        <div
-                          className="rounded shadow"
-                          style={{ backgroundColor: "#eebbfb" }}
-                        >
-                          <div className="card-body">
-                            <div className="d-flex align-items-center">
-                              <div className="">
-                                <p className="mb-1">Service Fee</p>
-                                <h2 className="mb-0">
-                                  ${order.service_fee}
-                                  <span
-                                    className=""
-                                    style={{ fontSize: "0.875rem" }}
-                                  ></span>
-                                </h2>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="col-lg-4 mb-4 mb-lg-0 mt-5">
-                        <div
-                          className="rounded shadow"
-                          style={{ backgroundColor: "#bbc5fb" }}
-                        >
-                          <div className="card-body">
-                            <div className="d-flex align-items-center">
-                              <div className="">
-                                <p className="mb-1">Discount Fee</p>
-                                <h2 className="mb-0">
-                                  -${order.saved}
-                                  <span
-                                    className=""
-                                    style={{ fontSize: "0.875rem" }}
-                                  ></span>
-                                </h2>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-
-
-
-
-                  {/* Section: Summary */}
-                  {/* Section: MSC */}
-                  <section className="">
-                    <div className="row rounded shadow p-3">
-                      <div className="col-lg-12 mb-4 mb-lg-0">
-                        <table className="table align-middle mb-0 bg-white">
-                          <thead className="bg-light">
-                            <tr>
-                              <th>Product</th>
-                              <th>Price</th>
-                              <th>Qty</th>
-                              <th>Total</th>
-                              <th className='text-danger'>Discount</th>
-                              <th>Tracking Info</th>
-                              <th>Action</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {orderItems?.map((order, index) => (
-                              <tr key={index}>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <img
-                                      src={order?.product?.image}
-                                      style={{ width: 70, height: 70, objectFit: "cover", borderRadius: 8 }}
-                                      alt=""
-                                    />
-                                    <Link to={`/detail/${order.product.slug}`} className="fw-bold text-dark ms-2 mb-0">
-                                      {order?.product?.title}
-                                    </Link>
-                                  </div>
-                                </td>
-                                <td>
-                                  <p className="fw-normal mb-1">${order.product.price}</p>
-                                </td>
-                                <td>
-                                  <p className="fw-normal mb-1">{order.qty}</p>
-                                </td>
-                                <td>
-                                  <span className="fw-normal mb-1">${order.sub_total}</span>
-                                </td>
-                                <td>
-                                  <span className="fw-normal mb-1 text-danger"> -${order.saved}</span>
-                                </td>
-                                <td>
-                                  {order.tracking_id && order.tracking_id !== 'undefined' ? (
-                                    <div>
-                                      <span className="badge bg-success-subtle text-success border border-success-subtle mb-1 d-inline-block">
-                                        <i className="fas fa-truck me-1"></i> {order.delivery_couriers?.name || 'Courier Assigned'}
-                                      </span>
-                                      <div className="small font-monospace text-dark fw-bold">
-                                        AWB: {order.tracking_id}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <span className="badge bg-secondary-subtle text-secondary border">
-                                      No Tracking Yet
-                                    </span>
-                                  )}
-                                </td>
-                                <td>
-                                  {order.tracking_id == null || order.tracking_id === 'undefined' || !order.tracking_id ? (
-                                    <Link className="btn btn-primary btn-sm rounded-pill" to={`/vendor/orders/${param.oid}/${order.id}/`}>
-                                      Add Tracking <i className='fas fa-plus ms-1'></i>
-                                    </Link>
-                                  ) : (
-                                    <div className="d-flex gap-1 flex-wrap">
-                                      <Link className="btn btn-outline-secondary btn-sm rounded-pill" to={`/vendor/orders/${param.oid}/${order.id}/`}>
-                                        <i className='fas fa-edit'></i> Edit
-                                      </Link>
-                                      <Link className="btn btn-outline-primary btn-sm rounded-pill" to={`/track-order/${param.oid}/?tracking_id=${order.tracking_id}`}>
-                                        <i className='fas fa-location-arrow'></i> Track
-                                      </Link>
-                                    </div>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-
-                            {orderItems.length < 1 && (
-    <tr>
-        <td colSpan="6" className="text-center">
-            <h5 className="mt-4">
-                No Order Item
-            </h5>
-        </td>
-    </tr>
-)}
-
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </section>
+          <div className="mb-3 mt-3">
+            <main className="mb-5">
+              <div className="container-fluid px-2 px-md-4">
+                {/* Header */}
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <h3 className="mb-0 fw-bold">
+                    <i className="fas fa-shopping-cart text-primary me-2" />
+                    Order #{order?.oid || param?.oid}
+                  </h3>
+                  <Link to="/vendor/orders/" className="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                    <i className="fas fa-arrow-left me-1"></i> Back to Orders
+                  </Link>
                 </div>
-              </main>
-            </div>
+
+                {loading && !order?.oid && (
+                  <div className="text-center py-5">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="text-muted mt-2 small">Loading order details...</p>
+                  </div>
+                )}
+
+                {/* Section: Metrics Row 1 */}
+                <div className="row g-2 g-md-3 mb-3">
+                  <div className="col-6 col-md-3">
+                    <div className="rounded-3 shadow-sm p-3 h-100" style={{ backgroundColor: "#E0F2FE" }}>
+                      <p className="text-secondary small mb-1">Total</p>
+                      <h4 className="fw-bold mb-0 text-dark">${order?.total || 0}</h4>
+                    </div>
+                  </div>
+                  <div className="col-6 col-md-3">
+                    <div className="rounded-3 shadow-sm p-3 h-100" style={{ backgroundColor: "#F3E8FF" }}>
+                      <p className="text-secondary small mb-1">Payment</p>
+                      <h5 className="fw-bold mb-0 text-dark text-truncate">{order?.payment_status?.toUpperCase() || "N/A"}</h5>
+                    </div>
+                  </div>
+                  <div className="col-6 col-md-3">
+                    <div className="rounded-3 shadow-sm p-3 h-100" style={{ backgroundColor: "#DBEAFE" }}>
+                      <p className="text-secondary small mb-1">Order Status</p>
+                      <h5 className="fw-bold mb-0 text-dark text-truncate">{order?.order_status || "Pending"}</h5>
+                    </div>
+                  </div>
+                  <div className="col-6 col-md-3">
+                    <div className="rounded-3 shadow-sm p-3 h-100" style={{ backgroundColor: "#DCFCE7" }}>
+                      <p className="text-secondary small mb-1">Shipping</p>
+                      <h4 className="fw-bold mb-0 text-dark">${order?.shipping_amount || 0}</h4>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Metrics Row 2 */}
+                <div className="row g-2 g-md-3 mb-4">
+                  <div className="col-4">
+                    <div className="rounded-3 shadow-sm p-2 p-md-3 h-100" style={{ backgroundColor: "#FEF3C7" }}>
+                      <p className="text-secondary small mb-1">Tax</p>
+                      <h6 className="fw-bold mb-0 text-dark">${order?.tax_fee || 0}</h6>
+                    </div>
+                  </div>
+                  <div className="col-4">
+                    <div className="rounded-3 shadow-sm p-2 p-md-3 h-100" style={{ backgroundColor: "#FCE7F3" }}>
+                      <p className="text-secondary small mb-1">Service Fee</p>
+                      <h6 className="fw-bold mb-0 text-dark">${order?.service_fee || 0}</h6>
+                    </div>
+                  </div>
+                  <div className="col-4">
+                    <div className="rounded-3 shadow-sm p-2 p-md-3 h-100" style={{ backgroundColor: "#EDE9FE" }}>
+                      <p className="text-secondary small mb-1">Discount</p>
+                      <h6 className="fw-bold mb-0 text-danger">-${order?.saved || 0}</h6>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section: Items Table */}
+                <div className="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+                  <div className="card-header bg-white py-3 border-bottom">
+                    <h5 className="mb-0 fw-bold">Order Items ({orderItems?.length || 0})</h5>
+                  </div>
+                  <div className="table-responsive">
+                    <table className="table align-middle mb-0 bg-white">
+                      <thead className="bg-light">
+                        <tr>
+                          <th>Product</th>
+                          <th>Price</th>
+                          <th>Qty</th>
+                          <th>Total</th>
+                          <th className='text-danger'>Discount</th>
+                          <th>Tracking Info</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {orderItems?.map((item, index) => (
+                          <tr key={item.id || index}>
+                            <td>
+                              <div className="d-flex align-items-center">
+                                <img
+                                  src={item?.product?.image}
+                                  style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 8 }}
+                                  alt=""
+                                  loading="lazy"
+                                />
+                                <div className="ms-2">
+                                  <Link to={`/detail/${item?.product?.slug}`} className="fw-bold text-dark text-decoration-none d-block">
+                                    {item?.product?.title}
+                                  </Link>
+                                  {item?.size && item?.size !== 'No Size' && (
+                                    <span className="badge bg-light text-dark border me-1 small">Size: {item.size}</span>
+                                  )}
+                                  {item?.color && item?.color !== 'No Color' && (
+                                    <span className="badge bg-light text-dark border small">Color: {item.color}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                            <td>
+                              <p className="fw-semibold mb-0">${item?.product?.price || item?.price}</p>
+                            </td>
+                            <td>
+                              <span className="badge bg-secondary-subtle text-dark border">{item?.qty}</span>
+                            </td>
+                            <td>
+                              <span className="fw-bold mb-0 text-dark">${item?.sub_total}</span>
+                            </td>
+                            <td>
+                              <span className="text-danger fw-semibold">-${item?.saved || 0}</span>
+                            </td>
+                            <td>
+                              {item.tracking_id && item.tracking_id !== 'undefined' ? (
+                                <div>
+                                  <span className="badge bg-success-subtle text-success border border-success-subtle mb-1 d-inline-block">
+                                    <i className="fas fa-truck me-1"></i> {item?.delivery_couriers?.name || 'Courier Assigned'}
+                                  </span>
+                                  <div className="small font-monospace text-dark fw-bold">
+                                    AWB: {item.tracking_id}
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="badge bg-secondary-subtle text-secondary border">
+                                  No Tracking Yet
+                                </span>
+                              )}
+                            </td>
+                            <td>
+                              {(!item.tracking_id || item.tracking_id === 'undefined') ? (
+                                <Link className="btn btn-primary btn-sm rounded-pill px-3 shadow-sm" to={`/vendor/orders/${param.oid}/${item.id}/`}>
+                                  <i className='fas fa-plus me-1'></i> Add Tracking
+                                </Link>
+                              ) : (
+                                <div className="d-flex gap-1 flex-wrap">
+                                  <Link className="btn btn-outline-secondary btn-sm rounded-pill px-2 py-1" to={`/vendor/orders/${param.oid}/${item.id}/`}>
+                                    <i className='fas fa-edit'></i> Edit
+                                  </Link>
+                                  <Link className="btn btn-outline-primary btn-sm rounded-pill px-2 py-1" to={`/track-order/${param.oid}/?tracking_id=${item.tracking_id}`}>
+                                    <i className='fas fa-location-arrow'></i> Track
+                                  </Link>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+
+                        {orderItems.length < 1 && !loading && (
+                          <tr>
+                            <td colSpan="7" className="text-center py-4 text-muted">
+                              No Order Items Found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+            </main>
           </div>
         </div>
       </div>

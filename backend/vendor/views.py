@@ -94,7 +94,13 @@ class OrdersAPIView(generics.ListAPIView):
     def get_queryset(self):
         vendor_id = self.kwargs['vendor_id']
         vendor = Vendor.objects.get(id=vendor_id)
-        orders = CartOrder.objects.filter(vendor=vendor, payment_status="paid").prefetch_related('orderitem', 'orderitem__product')
+        orders = CartOrder.objects.filter(vendor=vendor, payment_status="paid").select_related('buyer').prefetch_related(
+            'vendor',
+            'orderitem',
+            'orderitem__product',
+            'orderitem__delivery_couriers',
+            'orderitem__vendor'
+        ).order_by('-date')
         return orders
 
 
@@ -673,8 +679,13 @@ class OrderDetailAPIView(generics.RetrieveAPIView):
         order_oid = self.kwargs['order_oid']
 
         vendor = Vendor.objects.get(id=vendor_id)
-        order = CartOrder.objects.prefetch_related('orderitem', 'orderitem__product').get(
-            vendor=vendor, payment_status="paid", oid=order_oid)
+        order = CartOrder.objects.select_related('buyer').prefetch_related(
+            'vendor',
+            'orderitem',
+            'orderitem__product',
+            'orderitem__delivery_couriers',
+            'orderitem__vendor'
+        ).get(vendor=vendor, payment_status="paid", oid=order_oid)
         return order
 
 
@@ -1015,7 +1026,7 @@ class OrderItemDetailAPIView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         pk = self.kwargs['pk']
-        return CartOrderItem.objects.get(id=pk)
+        return CartOrderItem.objects.select_related('product', 'delivery_couriers', 'vendor', 'order', 'order__buyer').get(id=pk)
     
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -1047,7 +1058,9 @@ class OrderItemDetailAPIView(generics.RetrieveUpdateAPIView):
 
         notify_buyer = request.data.get('notify_buyer')
         if str(notify_buyer).lower() in ['true', '1']:
-            site_url = getattr(settings, 'SITE_URL', 'http://localhost:5173')
+            site_url = getattr(settings, 'SITE_URL', None) or "https://ansari-store-indol.vercel.app"
+            if not site_url or "localhost" in site_url or "127.0.0.1" in site_url or "onrender.com" in site_url:
+                site_url = "https://ansari-store-indol.vercel.app"
             courier_name = instance.delivery_couriers.name if instance.delivery_couriers else "Carrier Partner"
             
             carrier_link = ""
