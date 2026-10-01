@@ -37,11 +37,26 @@ schema_view = get_schema_view(
    permission_classes=(permissions.AllowAny,),
 )
 
+from django.shortcuts import redirect
+
+def track_order_redirect(request, order_oid=""):
+    query_string = request.META.get('QUERY_STRING', '')
+    target = "https://ansari-store-indol.vercel.app/track-order/"
+    if order_oid:
+        target += f"{order_oid}/"
+    if query_string:
+        target += f"?{query_string}"
+    return redirect(target)
+
 urlpatterns = [
     path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     
+    # Fallback redirect for tracking links in email to Vercel frontend
+    path('track-order/', track_order_redirect),
+    path('track-order/<str:order_oid>/', track_order_redirect),
+
     # API V1 Urls
     path("api/v1/", include("api.urls")),
 

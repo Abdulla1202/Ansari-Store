@@ -432,7 +432,7 @@ function Products() {
                                 <div className="row">
                                     {currentItems.map((product, index) => (
                                         <div
-                                            className="col-lg-4 col-md-6 col-sm-6 col-12 mb-4"
+                                            className="col-6 col-md-4 col-lg-4 mb-3 px-1 px-sm-2"
                                             key={product.id}
                                             style={{ zIndex: activeDropdown === product.id ? 1050 : 1, position: "relative" }}
                                         >
@@ -734,7 +734,7 @@ function Products() {
         <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
             {featuredProducts.map((product, index) => (
                 <div
-                    className="col-lg-4 col-md-6 col-sm-6 col-12 mb-4"
+                    className="col-6 col-md-4 col-lg-4 mb-3 px-1 px-sm-2"
                     key={product.id || index}
                 >
                                             <div className="card shadow-sm h-100">

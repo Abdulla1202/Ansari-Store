@@ -207,8 +207,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'userauths.User'
 
-# Site URL
-SITE_URL = env("SITE_URL", default="http://localhost:5173")
+# Site URL (defaults to production frontend on Vercel)
+SITE_URL = env("SITE_URL", default="https://ansari-store-indol.vercel.app")
 
 # Stripe API Keys
 STRIPE_PUBLIC_KEY = env("STRIPE_PUBLIC_KEY", default="")

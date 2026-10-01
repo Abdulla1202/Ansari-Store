@@ -7,19 +7,29 @@ import Sidebar from './Sidebar';
 import { deleteProduct } from '../plugin/DeleteProduct';
 
 function Products() {
-    const [products, setProducts] = useState([])
-
     const axios = apiInstance
     const userData = UserData()
+    const vendorId = userData?.vendor_id
+
+    const [products, setProducts] = useState(() => {
+        try {
+            const cached = localStorage.getItem(`cached_vendor_products_${vendorId}`);
+            return cached ? JSON.parse(cached) : [];
+        } catch {
+            return [];
+        }
+    });
 
     if (UserData()?.vendor_id === 0) {
         window.location.href = '/vendor/register/'
     }
     
     const fetchData = async () => {
+        if (!vendorId) return;
         try {
-            const response = await axios.get(`vendor/products/${userData?.vendor_id}/`)
+            const response = await axios.get(`vendor/products/${vendorId}/`)
             setProducts(response.data);
+            localStorage.setItem(`cached_vendor_products_${vendorId}`, JSON.stringify(response.data));
         } catch (error) {
             console.error('Error fetching data:', error);
         }

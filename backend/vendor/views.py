@@ -83,7 +83,7 @@ class ProductsAPIView(generics.ListAPIView):
     def get_queryset(self):
         vendor_id = self.kwargs['vendor_id']
         vendor = Vendor.objects.get(id=vendor_id)
-        products = Product.objects.filter(vendor=vendor)
+        products = Product.objects.filter(vendor=vendor).select_related('category', 'vendor').prefetch_related('gallery_set', 'color_set', 'size_set', 'specification_set')
         return products
 
 
@@ -94,7 +94,7 @@ class OrdersAPIView(generics.ListAPIView):
     def get_queryset(self):
         vendor_id = self.kwargs['vendor_id']
         vendor = Vendor.objects.get(id=vendor_id)
-        orders = CartOrder.objects.filter(vendor=vendor, payment_status="paid")
+        orders = CartOrder.objects.filter(vendor=vendor, payment_status="paid").prefetch_related('orderitem_set', 'orderitem_set__product')
         return orders
 
 
@@ -673,7 +673,7 @@ class OrderDetailAPIView(generics.RetrieveAPIView):
         order_oid = self.kwargs['order_oid']
 
         vendor = Vendor.objects.get(id=vendor_id)
-        order = CartOrder.objects.get(
+        order = CartOrder.objects.prefetch_related('orderitem_set', 'orderitem_set__product').get(
             vendor=vendor, payment_status="paid", oid=order_oid)
         return order
 

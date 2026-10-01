@@ -150,12 +150,26 @@ body {
     font-size: 0.85rem;
   }
   .card .bg-image img {
-    height: 180px !important;
+    height: 155px !important;
+    object-fit: cover !important;
   }
   .card-body {
-    padding: 0.85rem !important;
+    padding: 10px 8px !important;
   }
   .card-title {
-    font-size: 0.95rem !important;
+    font-size: 0.85rem !important;
+    margin-bottom: 4px !important;
+    line-height: 1.25;
+  }
+  .card-body h6 {
+    font-size: 0.85rem !important;
+  }
+  .card-body .btn {
+    font-size: 0.75rem !important;
+    padding: 6px 10px !important;
+  }
+  .card-body .dropdown-toggle {
+    font-size: 0.75rem !important;
+    padding: 6px 10px !important;
   }
 }

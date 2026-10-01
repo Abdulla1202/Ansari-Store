@@ -7,10 +7,18 @@ import UserData from '../plugin/UserData';
 import Sidebar from './Sidebar';
 
 function Orders() {
-    const [orders, setOrders] = useState(null)
-
     const axios = apiInstance
     const userData = UserData()
+    const vendorId = userData?.vendor_id
+
+    const [orders, setOrders] = useState(() => {
+        try {
+            const cached = localStorage.getItem(`cached_vendor_orders_${vendorId}`);
+            return cached ? JSON.parse(cached) : [];
+        } catch {
+            return [];
+        }
+    });
 
     if (UserData()?.vendor_id === 0) {
         window.location.href = '/vendor/register/'
@@ -18,9 +26,11 @@ function Orders() {
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!vendorId) return;
             try {
-                const response = await axios.get(`vendor/orders/${userData?.vendor_id}/`)
+                const response = await axios.get(`vendor/orders/${vendorId}/`)
                 setOrders(response.data);
+                localStorage.setItem(`cached_vendor_orders_${vendorId}`, JSON.stringify(response.data));
             } catch (error) {
                 console.error('Error fetching data:', error);
             }

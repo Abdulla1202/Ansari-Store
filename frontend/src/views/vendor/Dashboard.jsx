@@ -13,81 +13,114 @@ import Swal from 'sweetalert2';
 
 function Dashboard() {
 
-  const [stats, setStats] = useState(null)
-  const [products, setProducts] = useState(null)
-  const [orders, setOrders] = useState(null)
-  const [orderChartData, setOrderChartData] = useState(null)
-  const [productsChartData, setProductsChartData] = useState(null)
-
-
   const axios = apiInstance
   const userData = UserData()
   const navigate = useNavigate()
+  const vendorId = userData?.vendor_id
+
+  const [stats, setStats] = useState(() => {
+    try {
+      const c = localStorage.getItem(`cached_vendor_stats_${vendorId}`);
+      return c ? JSON.parse(c) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [products, setProducts] = useState(() => {
+    try {
+      const c = localStorage.getItem(`cached_vendor_products_${vendorId}`);
+      return c ? JSON.parse(c) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [orders, setOrders] = useState(() => {
+    try {
+      const c = localStorage.getItem(`cached_vendor_orders_${vendorId}`);
+      return c ? JSON.parse(c) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [orderChartData, setOrderChartData] = useState(() => {
+    try {
+      const c = localStorage.getItem(`cached_vendor_order_chart_${vendorId}`);
+      return c ? JSON.parse(c) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [productsChartData, setProductsChartData] = useState(() => {
+    try {
+      const c = localStorage.getItem(`cached_vendor_product_chart_${vendorId}`);
+      return c ? JSON.parse(c) : null;
+    } catch {
+      return null;
+    }
+  });
 
   if (UserData()?.vendor_id === 0) {
     window.location.href = '/vendor/register/'
   }
 
-
-  if (userData?.vendor_id !== 0) {
-
+  if (vendorId) {
     useEffect(() => {
       const fetchData = async () => {
         try {
-          const response = await axios.get(`vendor/stats/${userData?.vendor_id}/`)
+          const response = await axios.get(`vendor/stats/${vendorId}/`)
           setStats(response.data[0]);
+          localStorage.setItem(`cached_vendor_stats_${vendorId}`, JSON.stringify(response.data[0]));
         } catch (error) {
           console.error('Error fetching data:', error);
         }
       };
-
       fetchData();
-    }, []);
-
+    }, [vendorId]);
 
     useEffect(() => {
       const fetchData = async () => {
         try {
-          const response = await axios.get(`vendor/products/${userData?.vendor_id}/`)
+          const response = await axios.get(`vendor/products/${vendorId}/`)
           setProducts(response.data);
+          localStorage.setItem(`cached_vendor_products_${vendorId}`, JSON.stringify(response.data));
         } catch (error) {
           console.error('Error fetching data:', error);
         }
       };
-
       fetchData();
-    }, []);
-
+    }, [vendorId]);
 
     useEffect(() => {
       const fetchData = async () => {
         try {
-          const response = await axios.get(`vendor/orders/${userData?.vendor_id}/`)
+          const response = await axios.get(`vendor/orders/${vendorId}/`)
           setOrders(response.data);
+          localStorage.setItem(`cached_vendor_orders_${vendorId}`, JSON.stringify(response.data));
         } catch (error) {
           console.error('Error fetching data:', error);
         }
       };
-
       fetchData();
-    }, []);
+    }, [vendorId]);
   }
 
   useEffect(() => {
+    if (!vendorId) return;
     const fetchChartData = async () => {
       try {
-        const order_response = await axios.get(`vendor-orders-report-chart/${userData?.vendor_id}/`);
+        const order_response = await axios.get(`vendor-orders-report-chart/${vendorId}/`);
         setOrderChartData(order_response.data);
+        localStorage.setItem(`cached_vendor_order_chart_${vendorId}`, JSON.stringify(order_response.data));
 
-        const product_response = await axios.get(`vendor-products-report-chart/${userData?.vendor_id}/`);
+        const product_response = await axios.get(`vendor-products-report-chart/${vendorId}/`);
         setProductsChartData(product_response.data);
-
+        localStorage.setItem(`cached_vendor_product_chart_${vendorId}`, JSON.stringify(product_response.data));
       } catch (error) {
         console.log(error);
       }
     };
     fetchChartData();
-  }, [])
+  }, [vendorId])
 
   const order_months = orderChartData?.map(item => item.month);
   const order_counts = orderChartData?.map(item => item.orders);
