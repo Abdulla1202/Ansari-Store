@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary_storage',
+    'cloudinary',
 
 
     # Custom Apps
@@ -172,6 +174,43 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Cloudinary Configuration for Permanent Media Storage
+_cloudinary_url = env("CLOUDINARY_URL", default="")
+_cloud_name = env("CLOUDINARY_CLOUD_NAME", default=env("CLOUD_NAME", default="b0ertoeo"))
+_api_key = env("CLOUDINARY_API_KEY", default=env("API_KEY", default="538452363612789"))
+_api_secret = env("CLOUDINARY_API_SECRET", default=env("API_SECRET", default="**********"))
+
+if _cloudinary_url and "@" in _cloudinary_url:
+    try:
+        parts = _cloudinary_url.replace("cloudinary://", "").split("@")
+        credentials = parts[0].split(":")
+        _api_key = credentials[0]
+        _api_secret = credentials[1]
+        _cloud_name = parts[1]
+    except Exception:
+        pass
+
+_cloud_name = str(_cloud_name).strip().strip("'\"")
+_api_key = str(_api_key).strip().strip("'\"")
+_api_secret = str(_api_secret).strip().strip("'\"")
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': _cloud_name,
+    'API_KEY': _api_key,
+    'API_SECRET': _api_secret,
+}
+
+if _cloud_name and _api_key and _api_secret:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    STORAGES = {
+        "default": {
+            "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        },
+    }
 
 
 # AWS Configs
