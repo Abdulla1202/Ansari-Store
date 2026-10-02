@@ -160,7 +160,11 @@ function UpdateProduct() {
   useEffect(() => {
     const fetchProductItems = async () => {
       axios.get(`vendor-product-edit/${userData?.vendor_id}/${param.pid}/`).then((res) => {
-        setProduct(res.data)
+        const catId = res.data.category?.id || (typeof res.data.category === 'object' ? '' : res.data.category) || '';
+        setProduct({
+          ...res.data,
+          category: catId
+        })
         setColors(res.data.color)
         setSizes(res.data.size)
         setSpecifications(res.data.specification)
@@ -470,7 +474,7 @@ function UpdateProduct() {
                                   className="select form-control"
                                   id=""
                                   name="category"
-                                  value={product.category || ''}
+                                  value={product.category?.id || product.category || ''}
                                   onChange={handleProductInputChange}
                                 >
                                   <option value="">- Select -</option>

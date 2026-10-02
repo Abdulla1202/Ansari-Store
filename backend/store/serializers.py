@@ -123,8 +123,8 @@ class ProductSerializer(serializers.ModelSerializer):
         super(ProductSerializer, self).__init__(*args, **kwargs)
         # Customize serialization depth based on the request method.
         request = self.context.get('request')
-        if request and request.method == 'POST':
-            # When creating a new product, set serialization depth to 0.
+        if request and request.method in ['POST', 'PUT', 'PATCH']:
+            # When creating or updating a product, set serialization depth to 0.
             self.Meta.depth = 0
         else:
             # For other methods, set serialization depth to 3.

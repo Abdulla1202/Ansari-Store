@@ -496,6 +496,17 @@ class ProductUpdateAPIView(generics.RetrieveUpdateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
+        # Ensure category is explicitly updated if passed
+        category_id = request.data.get('category')
+        if category_id:
+            try:
+                category_obj = Category.objects.filter(id=category_id).first()
+                if category_obj:
+                    product.category = category_obj
+                    product.save()
+            except Exception as e:
+                print("Error updating category:", e)
+
         # ==========================================
         # 1. SPECIFICATIONS
         # ==========================================
