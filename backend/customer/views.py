@@ -211,7 +211,11 @@ class TrackOrderAPIView(APIView):
             product_img = ""
             if item.product and item.product.image:
                 try:
-                    product_img = item.product.image.url
+                    raw_img_url = item.product.image.url
+                    if raw_img_url.startswith("http://") or raw_img_url.startswith("https://"):
+                        product_img = raw_img_url
+                    else:
+                        product_img = request.build_absolute_uri(raw_img_url)
                 except Exception:
                     product_img = ""
 

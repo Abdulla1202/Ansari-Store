@@ -7,8 +7,28 @@ import Sidebar from './Sidebar';
 
 
 function Coupon() {
-    const [stats, setStats] = useState([])
-    const [coupons, setCoupons] = useState([])
+    const axios = apiInstance
+    const userData = UserData()
+    const vendorId = userData?.vendor_id
+
+    const [stats, setStats] = useState(() => {
+        try {
+            const c = localStorage.getItem(`cached_vendor_coupon_stats_${vendorId}`);
+            return c ? JSON.parse(c) : { total_coupons: 0, active_coupons: 0 };
+        } catch {
+            return { total_coupons: 0, active_coupons: 0 };
+        }
+    });
+
+    const [coupons, setCoupons] = useState(() => {
+        try {
+            const c = localStorage.getItem(`cached_vendor_coupons_${vendorId}`);
+            return c ? JSON.parse(c) : [];
+        } catch {
+            return [];
+        }
+    });
+
     const [createCoupons, setCreateCoupons] = useState({
         code: "",
         discount: "",
@@ -19,22 +39,23 @@ function Coupon() {
         window.location.href = '/vendor/register/'
     }
 
-    const axios = apiInstance
-    const userData = UserData()
-
     const fetchData = async () => {
+        if (!vendorId) return;
         try {
-            await axios.get(`vendor-coupon-list/${userData?.vendor_id}/`).then((res) => {
-                setCoupons(res.data);
-            })
+            const [listRes, statsRes] = await Promise.all([
+                axios.get(`vendor-coupon-list/${vendorId}/`),
+                axios.get(`vendor-coupon-stats/${vendorId}/`)
+            ]);
 
-            await axios.get(`vendor-coupon-list/${userData?.vendor_id}/`).then((res) => {
-                setCoupons(res.data);
-            })
+            if (listRes?.data) {
+                setCoupons(listRes.data);
+                localStorage.setItem(`cached_vendor_coupons_${vendorId}`, JSON.stringify(listRes.data));
+            }
 
-            await axios.get(`vendor-coupon-stats/${userData?.vendor_id}/`).then((res) => {
-                setStats(res.data[0]);
-            })
+            if (statsRes?.data?.[0]) {
+                setStats(statsRes.data[0]);
+                localStorage.setItem(`cached_vendor_coupon_stats_${vendorId}`, JSON.stringify(statsRes.data[0]));
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
         }
@@ -42,7 +63,7 @@ function Coupon() {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [vendorId]);
 
     const handleDeleteCoupon = async (couponId) => {
         await axios.delete(`vendor-coupon-detail/${userData?.vendor_id}/${couponId}`).then((res) => {
@@ -146,52 +167,55 @@ function Coupon() {
                         </div>
                     </div>
                     <hr />
-                    <div className="row  container">
-                        <div className="col-lg-12">
-                            <table className="table">
-                                <thead className="table-dark">
-                                    <tr>
-                                        <th scope="col">Code</th>
-                                        <th scope="col">Type</th>
-                                        <th scope="col">Discount</th>
-                                        <th scope="col">Status</th>
-                                        <th scope="col">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {coupons.map((coupon, index) => (
-                                        <tr key={coupon.id || index}>
-                                        <td>{coupon.code}</td>
-                                            <td>Percentage</td>
-                                            <td>{coupon.discount}%</td>
-                                            <td>
-                                                {coupon.active === true
-                                                    ? <p>Active</p>
-                                                    : <p>In-active</p>
-                                                }
-                                            </td>
-                                            <td>
-
-                                                <Link to={`/vendor/coupon/${coupon.id}/`} className="btn btn-primary mb-1">
-                                                    <i className="fas fa-edit" />
-                                                </Link>
-                                                <button onClick={() => handleDeleteCoupon(coupon.id)} className="btn btn-danger mb-1 ms-2">
-                                                    <i className="fas fa-trash" />
-                                                </button>
-                                            </td>
+                    <div className="row">
+                        <div className="col-12">
+                            <div className="table-responsive">
+                                <table className="table">
+                                    <thead className="table-dark">
+                                        <tr>
+                                            <th scope="col">Code</th>
+                                            <th scope="col">Type</th>
+                                            <th scope="col">Discount</th>
+                                            <th scope="col">Status</th>
+                                            <th scope="col">Action</th>
                                         </tr>
-                                    ))}
+                                    </thead>
+                                    <tbody>
+                                        {coupons.map((coupon, index) => (
+                                            <tr key={coupon.id || index}>
+                                            <td>{coupon.code}</td>
+                                                <td>Percentage</td>
+                                                <td>{coupon.discount}%</td>
+                                                <td>
+                                                    {coupon.active === true
+                                                        ? <p className="mb-0 text-success fw-semibold">Active</p>
+                                                        : <p className="mb-0 text-secondary">In-active</p>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <div className="d-flex align-items-center">
+                                                        <Link to={`/vendor/coupon/${coupon.id}/`} className="btn btn-primary btn-sm me-2">
+                                                            <i className="fas fa-edit" />
+                                                        </Link>
+                                                        <button onClick={() => handleDeleteCoupon(coupon.id)} className="btn btn-danger btn-sm">
+                                                            <i className="fas fa-trash" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
 
-                                    {coupons.length < 1 &&
-                                         <tr>
-                                             <td colSpan={5}>
-                                                 <h5 className='mt-4 p-3'>No coupons yet</h5>
-                                             </td>
-                                         </tr>
-                                    }
+                                        {coupons.length < 1 &&
+                                             <tr>
+                                                 <td colSpan={5}>
+                                                     <h5 className='mt-4 p-3'>No coupons yet</h5>
+                                                 </td>
+                                             </tr>
+                                        }
 
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>

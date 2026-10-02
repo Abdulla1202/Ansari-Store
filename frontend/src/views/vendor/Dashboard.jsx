@@ -217,25 +217,31 @@ function Dashboard() {
           <Link className='btn btn-primary me-2'>Daily Report</Link>
           <Link className='btn btn-primary me-2'>Monthly Report</Link>
           <Link className='btn btn-primary me-2'>Yearly Report</Link>
-          <div className="row my-2">
-            <div className="col-lg-6 ">
-              <div className="card">
-                <div className="card-body" >
-                  <Line data={order_data} style={{ height: 300, minWidth: "630px" }} />
+          <div className="row my-3 g-3">
+            <div className="col-12 col-xl-6">
+              <div className="card shadow-sm border-0 rounded-4 h-100">
+                <div className="card-body p-3">
+                  <h6 className="fw-bold mb-3 text-secondary">Orders Trend</h6>
+                  <div style={{ position: "relative", height: "260px", width: "100%" }}>
+                    <Line data={order_data} options={{ responsive: true, maintainAspectRatio: false }} />
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="col-lg-6">
-              <div className="card">
-                <div className="card-body" >
-                  <Line data={product_data} style={{ height: 300, minWidth: "630px" }} />
+            <div className="col-12 col-xl-6">
+              <div className="card shadow-sm border-0 rounded-4 h-100">
+                <div className="card-body p-3">
+                  <h6 className="fw-bold mb-3 text-secondary">Products Growth</h6>
+                  <div style={{ position: "relative", height: "260px", width: "100%" }}>
+                    <Line data={product_data} options={{ responsive: true, maintainAspectRatio: false }} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
           <a id="layouts" />
-          <div className="mb-3 mt-5" style={{ marginBottom: 300 }}>
-            <nav className='mb-5'>
+          <div className="mb-3 mt-4">
+            <nav className='mb-4'>
               <div className="nav nav-tabs" id="nav-tab" role="tablist">
                 <button className="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true"> <i className='bi bi-grid-fill'></i> Products</button>
                 <button className="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false"> <i className='fas fa-shopping-cart'></i> Orders</button>
@@ -244,7 +250,8 @@ function Dashboard() {
             <div className="tab-content" id="nav-tabContent">
               <div className="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
                 <h4>Products</h4>
-                <table className="table">
+                <div className="table-responsive">
+                  <table className="table">
                   <thead className="table-dark">
                     <tr>
                       <th scope="col">#ID</th>
@@ -287,10 +294,12 @@ function Dashboard() {
 
                   </tbody>
                 </table>
+                </div>
               </div>
               <div className="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
                 <h4>Orders</h4>
-                <table className="table">
+                <div className="table-responsive">
+                  <table className="table">
                   <thead className="table-dark">
                     <tr>
                       <th scope="col">#ID</th>
@@ -336,6 +345,7 @@ function Dashboard() {
 
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           </div>

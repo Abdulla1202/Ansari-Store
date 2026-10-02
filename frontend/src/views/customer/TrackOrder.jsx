@@ -15,6 +15,13 @@ function TrackOrder() {
   const [error, setError] = useState('');
   const [selectedItemIndex, setSelectedItemIndex] = useState(0);
 
+  const getProductImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const base = 'https://ansari-store.onrender.com';
+    return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   const fetchTracking = async (oid) => {
     if (!oid || !oid.trim()) return;
     setLoading(true);
@@ -421,19 +428,27 @@ function TrackOrder() {
                     <div className="d-flex align-items-center gap-3 mb-3 p-2 rounded-3 bg-light">
                       {activeItem.product_image ? (
                         <img
-                          src={activeItem.product_image}
+                          src={getProductImageUrl(activeItem.product_image)}
                           alt={activeItem.product_title}
                           className="rounded-3 object-fit-cover shadow-sm"
                           style={{ width: '65px', height: '65px' }}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            const fallback = e.target.parentElement.querySelector('.tracking-img-fallback');
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
                         />
-                      ) : (
-                        <div
-                          className="rounded-3 bg-secondary text-white d-flex align-items-center justify-content-center"
-                          style={{ width: '65px', height: '65px' }}
-                        >
-                          <i className="fas fa-box fa-2x"></i>
-                        </div>
-                      )}
+                      ) : null}
+                      <div
+                        className="rounded-3 bg-secondary text-white align-items-center justify-content-center tracking-img-fallback"
+                        style={{
+                          width: '65px',
+                          height: '65px',
+                          display: activeItem.product_image ? 'none' : 'flex'
+                        }}
+                      >
+                        <i className="fas fa-box fa-2x"></i>
+                      </div>
                       <div>
                         <h6 className="fw-bold text-dark mb-1 small">{activeItem.product_title}</h6>
                         <div className="text-muted small">Qty: {activeItem.qty}</div>

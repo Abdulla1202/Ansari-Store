@@ -7,66 +7,83 @@ import Sidebar from './Sidebar';
 
 
 function Notifications() {
-  const [notifications, setNotifications] = useState([]);
-  const [notificationStats, setNotificationStats] = useState({
-    un_read_noti: 0,
-    read_noti: 0,
-    all_noti: 0,
-  });
-  const [seenNotification, setSeenNotifications] = useState([]);
-
   const axios = apiInstance;
   const userData = UserData();
+  const vendorId = userData?.vendor_id;
+
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const c = localStorage.getItem(`cached_vendor_unseen_${vendorId}`);
+      return c ? JSON.parse(c) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [notificationStats, setNotificationStats] = useState(() => {
+    try {
+      const c = localStorage.getItem(`cached_vendor_noti_stats_${vendorId}`);
+      return c ? JSON.parse(c) : {
+        un_read_noti: 0,
+        read_noti: 0,
+        all_noti: 0,
+      };
+    } catch {
+      return {
+        un_read_noti: 0,
+        read_noti: 0,
+        all_noti: 0,
+      };
+    }
+  });
+
+  const [seenNotification, setSeenNotifications] = useState(() => {
+    try {
+      const c = localStorage.getItem(`cached_vendor_seen_${vendorId}`);
+      return c ? JSON.parse(c) : [];
+    } catch {
+      return [];
+    }
+  });
 
   if (UserData()?.vendor_id === 0) {
     window.location.href = '/vendor/register/'
   }
 
-  const fetchUnseenData = async () => {
+  const fetchAllNotificationData = async () => {
+    if (!vendorId) return;
     try {
-      const response = await axios.get(`vendor-notifications-unseen/${userData?.vendor_id}/`);
-      setNotifications(response.data);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
+      const [unseenRes, seenRes, statsRes] = await Promise.all([
+        axios.get(`vendor-notifications-unseen/${vendorId}/`),
+        axios.get(`vendor-notifications-seen/${vendorId}/`),
+        axios.get(`vendor-notifications-summary/${vendorId}/`)
+      ]);
 
-  const fetchSeenData = async () => {
-    try {
-      const response = await axios.get(`vendor-notifications-seen/${userData?.vendor_id}/`);
-      setSeenNotifications(response.data);
+      if (unseenRes?.data) {
+        setNotifications(unseenRes.data);
+        localStorage.setItem(`cached_vendor_unseen_${vendorId}`, JSON.stringify(unseenRes.data));
+      }
+      if (seenRes?.data) {
+        setSeenNotifications(seenRes.data);
+        localStorage.setItem(`cached_vendor_seen_${vendorId}`, JSON.stringify(seenRes.data));
+      }
+      if (statsRes?.data?.[0]) {
+        setNotificationStats(statsRes.data[0]);
+        localStorage.setItem(`cached_vendor_noti_stats_${vendorId}`, JSON.stringify(statsRes.data[0]));
+      }
     } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
-
-  const fetchStatsData = async () => {
-    try {
-      const response = await axios.get(`vendor-notifications-summary/${userData?.vendor_id}/`);
-      setNotificationStats(response.data[0]);
-    } catch (error) {
-      console.error('Error fetching stats data:', error);
+      console.error('Error fetching notification data:', error);
     }
   };
 
   useEffect(() => {
-    fetchUnseenData();
-  }, [userData?.vendor_id]);
-
-  useEffect(() => {
-    fetchSeenData();
-  }, [userData?.vendor_id]);
-
-  useEffect(() => {
-    fetchStatsData();
-  }, [userData?.vendor_id]);
+    fetchAllNotificationData();
+  }, [vendorId]);
 
   const handleNotificationSeenStatus = async (notiId) => {
     try {
-      const response = await axios.get(`vendor-notifications-mark-as-seen/${userData?.vendor_id}/${notiId}/`);
-      await fetchStatsData();
-      await fetchUnseenData();
-      await fetchSeenData();
+      await axios.get(`vendor-notifications-mark-as-seen/${vendorId}/${notiId}/`);
+      await fetchAllNotificationData();
     } catch (error) {
       console.error('Error marking notification as seen:', error);
     }
@@ -118,11 +135,10 @@ function Notifications() {
               </div>
             </div>
             <hr />
-            <div className="row  container">
-              <div className="col-lg-12">
-
-
-                <table className="table">
+            <div className="row">
+              <div className="col-12">
+                <div className="table-responsive">
+                  <table className="table">
                   <thead className="table-dark">
                     <tr>
                       <th scope="col">Type</th>
@@ -178,6 +194,7 @@ function Notifications() {
                     )}
                   </tbody>
                 </table>
+                </div>
 
                 <button
                   type="button"
@@ -196,7 +213,8 @@ function Notifications() {
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                           </div>
                           <div className="modal-body">
-                            <table className="table">
+                            <div className="table-responsive">
+                              <table className="table">
                               <thead className="table-dark">
                                 <tr>
                                   <th scope="col">Type</th>
@@ -239,6 +257,7 @@ function Notifications() {
                                 )}
                               </tbody>
                             </table>
+                            </div>
                           </div>
                         </div>
                       </div>

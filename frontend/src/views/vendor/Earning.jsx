@@ -8,136 +8,207 @@ import Sidebar from './Sidebar';
 
 
 function Earning() {
-  const [earningStats, setEarningStats] = useState(null)
-  const [earningStatsTracker, setEarningTracker] = useState([])
-  const [earningChartData, setEarningChartData] = useState(null)
+  const axios = apiInstance
+  const userData = UserData()
+  const vendorId = userData?.vendor_id
+
+  const [earningStats, setEarningStats] = useState(() => {
+    try {
+      const c = localStorage.getItem(`cached_vendor_earning_stats_${vendorId}`);
+      return c ? JSON.parse(c) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [earningStatsTracker, setEarningTracker] = useState(() => {
+    try {
+      const c = localStorage.getItem(`cached_vendor_earning_tracker_${vendorId}`);
+      return c ? JSON.parse(c) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [earningChartData, setEarningChartData] = useState(() => {
+    try {
+      const c = localStorage.getItem(`cached_vendor_earning_tracker_${vendorId}`);
+      return c ? JSON.parse(c) : null;
+    } catch {
+      return null;
+    }
+  });
 
   if (UserData()?.vendor_id === 0) {
     window.location.href = '/vendor/register/'
   }
 
-  const axios = apiInstance
-  const userData = UserData()
-
   useEffect(() => {
-    const fetEarningStats = async () => {
-      axios.get(`vendor-earning/${userData?.vendor_id}/`).then((res) => {
-        setEarningStats(res.data[0])
-      })
+    if (!vendorId) return;
+    const fetchEarningStats = async () => {
+      try {
+        const [statsRes, monthlyRes] = await Promise.all([
+          axios.get(`vendor-earning/${vendorId}/`),
+          axios.get(`vendor-monthly-earning/${vendorId}/`)
+        ]);
 
-      axios.get(`vendor-monthly-earning/${userData?.vendor_id}/`).then((res) => {
-        setEarningTracker(res.data)
-        setEarningChartData(res.data)
-      })
-    }
-    fetEarningStats()
-  }, [])
+        if (statsRes?.data?.[0]) {
+          setEarningStats(statsRes.data[0]);
+          localStorage.setItem(`cached_vendor_earning_stats_${vendorId}`, JSON.stringify(statsRes.data[0]));
+        }
 
-  const months = earningChartData?.map(item => item.month);
+        if (monthlyRes?.data) {
+          setEarningTracker(monthlyRes.data);
+          setEarningChartData(monthlyRes.data);
+          localStorage.setItem(`cached_vendor_earning_tracker_${vendorId}`, JSON.stringify(monthlyRes.data));
+        }
+      } catch (error) {
+        console.error('Error fetching earning data:', error);
+      }
+    };
+    fetchEarningStats();
+  }, [vendorId]);
+
+  const months = earningChartData?.map(item => {
+    const monthNames = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return monthNames[item.month] || `M${item.month}`;
+  });
   const revenue = earningChartData?.map(item => item.total_earning);
-  const sales_count = earningChartData?.map(item => item.sales_count);
-
 
   const revenue_data = {
-    labels: months,
+    labels: months || [],
     datasets: [
       {
-        label: "Revenue Analytics",
-        data: revenue,
+        label: "Revenue ($)",
+        data: revenue || [],
         fill: true,
-        backgroundColor: "#cdb9ed",
-        borderColor: "#6203fc"
+        backgroundColor: "rgba(99, 102, 241, 0.15)",
+        borderColor: "#4f46e5",
+        tension: 0.3
       },
     ]
   }
+
   return (
-    <div className="container-fluid" id="main" >
+    <div className="container-fluid" id="main">
       <div className="row row-offcanvas row-offcanvas-left h-100">
         <Sidebar />
-        <div className="col-md-9 col-lg-10 main">
-          <div className="mb-3 mt-3" style={{ marginBottom: 300 }}>
-            <h4><i className="fas fa-dollar-sign"></i> Earning and Revenue  </h4>
+        <div className="col-md-9 col-lg-10 main mt-4">
+          <div className="mb-4">
+            <h4 className="fw-bold mb-1">
+              <i className="fas fa-dollar-sign text-success me-2"></i> Earning & Revenue
+            </h4>
+            <p className="text-muted small">Real-time breakdown of sales performance and earnings</p>
 
-            <div className="col-xl-12 col-lg-12  mt-4">
-              <div className="row mb-3 text-white">
-                <div className="col-xl-6 col-lg-6 mb-2">
-                  <div className="card card-inverse card-success">
-                    <div className="card-block bg-success p-3">
-                      <div className="rotate">
-                        <i className="bi bi-currency-dollar fa-5x" />
-                      </div>
-                      <h6 className="text-uppercase">Total Sales</h6>
-                      <h1 className="display-1"><b>${earningStats?.total_revenue || "0.00"}</b></h1>
+            <div className="row g-3 my-2">
+              <div className="col-12 col-md-6">
+                <div
+                  className="card border-0 shadow-sm rounded-4 text-white p-3"
+                  style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)" }}
+                >
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <span className="text-uppercase small fw-semibold text-white-50">Total Sales Revenue</span>
+                      <h2 className="fw-bold mt-1 mb-0">${earningStats?.total_revenue || "0.00"}</h2>
                     </div>
-                  </div>
-                </div>
-                <div className="col-xl-6 col-lg-6 mb-2">
-                  <div className="card card-inverse card-danger">
-                    <div className="card-block bg-danger p-3">
-                      <div className="rotate">
-                        <i className="bi bi-currency-dollar fa-5x" />
-                      </div>
-                      <h6 className="text-uppercase">Monthly Earning</h6>
-                      <h1 className="display-1"><b>${earningStats?.monthly_revenue || "0.00"}</b></h1>
+                    <div
+                      className="rounded-circle p-3 d-flex align-items-center justify-content-center"
+                      style={{ backgroundColor: "rgba(255,255,255,0.2)", width: 60, height: 60 }}
+                    >
+                      <i className="bi bi-currency-dollar fs-3" />
                     </div>
                   </div>
                 </div>
               </div>
-              <hr />
-              <div className="row  container">
-                <div className="col-lg-12">
-                  <h4 className="mt-3 mb-4">Revenue Tracker</h4>
-                  <table className="table">
-                    <thead className="table-dark">
-                      <tr>
-                        <th scope="col">Month</th>
-                        <th scope="col">Sales</th>
-                        <th scope="col">Revenue</th>
-                        {/* <th scope="col">Action</th> */}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {earningStatsTracker?.map((earning, index) => (
-                        <tr  key={earning.id || index}>
-                          {earning.month == 1 && <th scope="row">January </th>}
-                          {earning.month == 2 && <th scope="row">February </th>}
-                          {earning.month == 3 && <th scope="row">March </th>}
-                          {earning.month == 4 && <th scope="row">April </th>}
-                          {earning.month == 5 && <th scope="row">May </th>}
-                          {earning.month == 6 && <th scope="row">June </th>}
-                          {earning.month == 7 && <th scope="row">July </th>}
-                          {earning.month == 8 && <th scope="row">August </th>}
-                          {earning.month == 9 && <th scope="row">September </th>}
-                          {earning.month == 10 && <th scope="row">October </th>}
-                          {earning.month == 11 && <th scope="row">November </th>}
-                          {earning.month == 12 && <th scope="row">December </th>}
-                          <td>{earning.sales_count}</td>
-                          <td>${earning.total_earning.toFixed(2)}</td>
-                          {/* <td>
-                            <a href="" className="btn btn-primary mb-1">
-                              <i className="fas fa-eye" />
-                            </a>
-                          </td> */}
-                        </tr>
-                      ))}
 
-                    </tbody>
-                  </table>
-                </div>
-                <div className="container">
-                  <div className="row ">
-                    <div className="col">
-                      <h4 className="mt-4">Revenue Analytics</h4>
+              <div className="col-12 col-md-6">
+                <div
+                  className="card border-0 shadow-sm rounded-4 text-white p-3"
+                  style={{ background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)" }}
+                >
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div>
+                      <span className="text-uppercase small fw-semibold text-white-50">Monthly Earning (30 Days)</span>
+                      <h2 className="fw-bold mt-1 mb-0">${earningStats?.monthly_revenue || "0.00"}</h2>
+                    </div>
+                    <div
+                      className="rounded-circle p-3 d-flex align-items-center justify-content-center"
+                      style={{ backgroundColor: "rgba(255,255,255,0.2)", width: 60, height: 60 }}
+                    >
+                      <i className="bi bi-graph-up-arrow fs-3" />
                     </div>
                   </div>
-                  <div className="row my-2">
-                    <div className="col-md-12 py-1">
-                      <div className="card">
-                        <div className="card-body">
-                          <Line data={revenue_data} style={{ height: 300, minWidth: "630px" }} />
-                        </div>
-                      </div>
-                    </div>
+                </div>
+              </div>
+            </div>
+
+            <hr className="my-4" />
+
+            <div className="row g-4">
+              <div className="col-12 col-lg-6">
+                <div className="card border-0 shadow-sm rounded-4 p-3 h-100">
+                  <h5 className="fw-bold mb-3 text-secondary">
+                    <i className="fas fa-calendar-alt me-2 text-primary"></i> Monthly Breakdown
+                  </h5>
+                  <div className="table-responsive">
+                    <table className="table align-middle">
+                      <thead className="table-dark">
+                        <tr>
+                          <th scope="col">Month</th>
+                          <th scope="col">Sales</th>
+                          <th scope="col">Revenue</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {earningStatsTracker?.map((earning, index) => (
+                          <tr key={earning.id || index}>
+                            <th scope="row">
+                              {earning.month === 1 && "January"}
+                              {earning.month === 2 && "February"}
+                              {earning.month === 3 && "March"}
+                              {earning.month === 4 && "April"}
+                              {earning.month === 5 && "May"}
+                              {earning.month === 6 && "June"}
+                              {earning.month === 7 && "July"}
+                              {earning.month === 8 && "August"}
+                              {earning.month === 9 && "September"}
+                              {earning.month === 10 && "October"}
+                              {earning.month === 11 && "November"}
+                              {earning.month === 12 && "December"}
+                            </th>
+                            <td>{earning.sales_count}</td>
+                            <td className="fw-bold text-success">${Number(earning.total_earning || 0).toFixed(2)}</td>
+                          </tr>
+                        ))}
+                        {(!earningStatsTracker || earningStatsTracker.length === 0) && (
+                          <tr>
+                            <td colSpan={3} className="text-center text-muted py-4">No monthly records yet</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-12 col-lg-6">
+                <div className="card border-0 shadow-sm rounded-4 p-3 h-100">
+                  <h5 className="fw-bold mb-3 text-secondary">
+                    <i className="fas fa-chart-line me-2 text-info"></i> Revenue Growth
+                  </h5>
+                  <div style={{ position: "relative", height: "260px", width: "100%" }}>
+                    <Line
+                      data={revenue_data}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: {
+                            display: false
+                          }
+                        }
+                      }}
+                    />
                   </div>
                 </div>
               </div>
