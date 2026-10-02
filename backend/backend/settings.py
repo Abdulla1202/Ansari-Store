@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary_storage',
+    'cloudinary',
 
 
     # Custom Apps
@@ -172,6 +174,54 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Cloudinary Configuration for Permanent Media Storage
+_raw_c_url = env("CLOUDINARY_URL", default="")
+_cloud_name = env("CLOUDINARY_CLOUD_NAME", default=env("CLOUD_NAME", default="b0ertoeo"))
+_api_key = env("CLOUDINARY_API_KEY", default=env("API_KEY", default="538452363612789"))
+_api_secret = env("CLOUDINARY_API_SECRET", default=env("API_SECRET", default="peZI2MYMMYEFiEMZGD_fy1NiMdg"))
+
+# Clean up any quotes or brackets that might have been copied
+_cloud_name = str(_cloud_name).strip().strip("'\"<> ")
+_api_key = str(_api_key).strip().strip("'\"<> ")
+_api_secret = str(_api_secret).strip().strip("'\"<> ")
+
+if _raw_c_url and "@" in _raw_c_url:
+    try:
+        parts = _raw_c_url.replace("cloudinary://", "").split("@")
+        credentials = parts[0].split(":")
+        parsed_key = credentials[0].strip().strip("'\"<> ")
+        parsed_secret = credentials[1].strip().strip("'\"<> ")
+        parsed_cloud = parts[1].strip().strip("'\"<> ")
+        if parsed_key and parsed_key.isdigit():
+            _api_key = parsed_key
+        if parsed_secret:
+            _api_secret = parsed_secret
+        if parsed_cloud:
+            _cloud_name = parsed_cloud
+    except Exception:
+        pass
+
+# Auto-correct if user accidentally swapped Key and Secret
+if len(_api_key) > len(_api_secret) and not _api_key.isdigit() and _api_secret.isdigit():
+    _api_key, _api_secret = _api_secret, _api_key
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': _cloud_name,
+    'API_KEY': _api_key,
+    'API_SECRET': _api_secret,
+}
+
+if _cloud_name and _api_key and _api_secret:
+    DEFAULT_FILE_STORAGE = 'backend.storage.SafeMediaStorage'
+    STORAGES = {
+        "default": {
+            "BACKEND": "backend.storage.SafeMediaStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        },
+    }
 
 
 
