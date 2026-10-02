@@ -207,8 +207,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'userauths.User'
 
-# Site URL (defaults to production frontend on Vercel)
-SITE_URL = env("SITE_URL", default="https://ansari-store-indol.vercel.app")
+# Site URL (guaranteed live Vercel domain)
+_raw_site_url = env("SITE_URL", default="https://ansari-store-indol.vercel.app")
+if not _raw_site_url or "ansari-store.vercel.app" in _raw_site_url or "localhost" in _raw_site_url or "127.0.0.1" in _raw_site_url or "onrender.com" in _raw_site_url:
+    SITE_URL = "https://ansari-store-indol.vercel.app"
+else:
+    SITE_URL = _raw_site_url
 
 # Stripe API Keys
 STRIPE_PUBLIC_KEY = env("STRIPE_PUBLIC_KEY", default="")

@@ -1059,7 +1059,7 @@ class OrderItemDetailAPIView(generics.RetrieveUpdateAPIView):
         notify_buyer = request.data.get('notify_buyer')
         if str(notify_buyer).lower() in ['true', '1']:
             site_url = getattr(settings, 'SITE_URL', None) or "https://ansari-store-indol.vercel.app"
-            if not site_url or "localhost" in site_url or "127.0.0.1" in site_url or "onrender.com" in site_url:
+            if not site_url or "localhost" in site_url or "127.0.0.1" in site_url or "onrender.com" in site_url or "ansari-store.vercel.app" in site_url:
                 site_url = "https://ansari-store-indol.vercel.app"
             courier_name = instance.delivery_couriers.name if instance.delivery_couriers else "Carrier Partner"
             
